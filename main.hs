@@ -4,37 +4,29 @@ import System.Environment (getArgs)
 main :: IO ()
 main = do
   args <- getArgs
-  let compilerInput = safeFirstElement args -- Gets run arguments
-  case compilerInput of
-    Nothing -> error "Error: must pass argument"
-    Just compilerInputString -> case compilerEntry compilerInputString of -- If first argument exists run
-      Right result -> print result
-      Left err -> error ("Error: " ++ err)
+  let compilerInput = firstElement args -- Gets run arguments
+  case compilerEntry compilerInput of -- If first argument exists run
+    Right result -> print result
+    Left err -> error ("Error: " ++ err)
 
-safeFirstElement :: [element] -> Maybe element -- Gets first element from list if it exists
-safeFirstElement [] = Nothing
-safeFirstElement (x : xs) = Just x
+firstElement :: [element] -> Maybe element -- Gets first element from list if it exists
+firstElement [] = Nothing
+firstElement (x : _) = Just x
 
-compilerEntry :: String -> Either String Int -- Verifies if input is sane
-compilerEntry compilerInput
+compilerEntry :: Maybe String -> Either String Int -- Verifies if input is sane
+compilerEntry Nothing = Left "must pass argument"
+compilerEntry (Just compilerInput)
   | null compilerInput = Left "input cannot be empty"
   | otherwise = parser compilerInput
 
-parseNumber :: String -> Either String (Int, String)
-parseNumber inputStr =
-  let trimmed = dropWhile isSpace inputStr
-      (ds, remaining) = span isDigit trimmed
-  in if null ds then Left "expected number" else Right (read ds, remaining)
+parser :: String -> Either String Int -- Sends input to eval
+parser input = do
+  (initialValue, remaining) <- parseNumber input
+  let remaining' = dropWhile isSpace remaining
+  loopEval initialValue remaining'
 
-parseOp :: String -> Either String (Char, String)
-parseOp inputStr
-  | opChar == '+' || opChar == '-' = Right (opChar, afterOp)
-  | otherwise = Left "expected operator"
-  where
-    trimmed = dropWhile isSpace inputStr
-    (opChar : afterOp) = trimmed
-
-loopEval :: Int -> String -> Either String Int
+-- Loops alternating number and operator and if it mismatches will error
+loopEval :: Int -> String -> Either String Int -- Iterates through input and send to specific parser
 loopEval total remainingStr
   | null trimmedRest = Right total
   | otherwise = do
@@ -45,8 +37,16 @@ loopEval total remainingStr
   where
     trimmedRest = dropWhile isSpace remainingStr
 
-parser :: String -> Either String Int
-parser input = do
-  (initialValue, remaining) <- parseNumber input
-  let remaining' = dropWhile isSpace remaining
-  loopEval initialValue remaining'
+parseNumber :: String -> Either String (Int, String) -- Receives string and pareses it to number, errors if its the wrong type
+parseNumber inputStr
+  | null ds = Left "expected number"
+  | otherwise = Right (read ds, remaining)
+  where trimmed = dropWhile isSpace inputStr
+        (ds, remaining) = span isDigit trimmed
+
+parseOp :: String -> Either String (Char, String) -- Receives string and pareses it to operator, errors if its the wrong type
+parseOp inputStr
+  | opChar == '+' || opChar == '-' = Right (opChar, afterOp)
+  | otherwise = Left "expected operator"
+  where trimmed = dropWhile isSpace inputStr
+        (opChar : afterOp) = trimmed
