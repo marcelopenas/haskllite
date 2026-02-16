@@ -22,5 +22,6 @@ cabal.project.local~
 .HTF/
 .ghc.environment.*
 
-# Exclude main binary
+# Exclude main binaries
 main
+main.exe
