@@ -5,3 +5,7 @@
 ## Run
 
     runghc main.hs [arguments]
+
+## Diagrama sintático
+
+<!-- TODO diagrama -->
