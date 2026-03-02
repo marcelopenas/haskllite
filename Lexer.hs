@@ -41,6 +41,7 @@ selectNextParseInt (Lexer source position next) buildingInt
         )
         (buildingInt ++ [currentChar])
   | otherwise =
-      Lexer source position (Token Token.INT (Right $ read buildingInt))
+      Lexer source (position - 1) (Token Token.INT (Right $ read buildingInt))
+      -- position - 1, since the loop preemptively adds 1, when its over it will be on the next char, but finished
   where
     currentChar = source !! position
