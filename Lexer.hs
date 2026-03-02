@@ -21,6 +21,7 @@ getNext (Lexer source position next)
   | nextChar == '\0' = Lexer source nextPos (Token Token.EOF (Left "\0"))
   | nextChar == '+' = Lexer source nextPos (Token Token.PLUS (Left "+"))
   | nextChar == '-' = Lexer source nextPos (Token Token.MINUS (Left "-"))
+  | nextChar == '^' = Lexer source nextPos (Token Token.XOR (Left "^"))
   | isDigit nextChar =
       getNextParseInt (Lexer source nextPos next) ""
   | nextChar == ' ' = getNext (Lexer source nextPos next) -- If space proceed to next position

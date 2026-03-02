@@ -5,6 +5,7 @@ where
 
 import Lexer (Lexer (..), getNext)
 import Token (Kind (..), Token (..), Value (..))
+import Data.Bits (Bits(xor))
 
 evaluateNextKind :: Lexer -> Token.Kind
 evaluateNextKind lex = kind (next lex)
@@ -26,6 +27,7 @@ parseExpression lex
   | evaluateNextKind lex == Token.INT = parseExpression' (getNext lex) (evaluateValueInt $ evaluateNextValue lex)
   | evaluateNextKind lex == Token.PLUS = error "[Parser] expected INT"
   | evaluateNextKind lex == Token.MINUS = error "[Parser] expected INT"
+  | evaluateNextKind lex == Token.XOR = error "[Parser] expected INT"
   | evaluateNextKind lex == Token.EOF = error "[Parser] expected INT"
   | otherwise = error "[Parser] invalid token"
 
@@ -42,5 +44,10 @@ parseExpression' lex val
         then
           parseExpression' (getNext (getNext lex)) (val - evaluateValueInt (evaluateNextValue (getNext lex)))
         else error "[Parser] expected INT after -"
+  | evaluateNextKind lex == Token.XOR =
+      if evaluateNextKind (getNext lex) == Token.INT
+        then
+          parseExpression' (getNext (getNext lex)) (val `xor` evaluateValueInt (evaluateNextValue (getNext lex)))
+        else error "[Parser] expected INT after ^"
   | evaluateNextKind lex == Token.INT = error "[Parser] expected OPERAND + or -"
   | otherwise = error "[Parser] invalid token"
