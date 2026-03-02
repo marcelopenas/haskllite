@@ -8,4 +8,14 @@
 
 ## Diagrama sintático
 
-<img src="diagram.png" alt="Diagrama Sintático" style="background-color: #FFFFFF;">
+![Diagrama Sintático](diagram.png)
+
+## Tagging
+
+vX.Y.Z - For normal
+
+xX.Y.Z - For extra
+
+git tag `tag`
+
+git push origin `tag`
