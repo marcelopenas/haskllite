@@ -15,6 +15,7 @@ data Lexer = Lexer
   }
   deriving (Show)
 
+-- ? should numeric values evaluate to INT here and 'value' be 'Either String Int' ?
 getNext :: Lexer -> Lexer
 getNext (Lexer source position next)
   | length source <= nextPos = Lexer source nextPos (Token Token.EOF (Left "\0"))

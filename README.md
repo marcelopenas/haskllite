@@ -8,4 +8,4 @@
 
 ## Diagrama sintático
 
-<!-- TODO diagrama -->
+<img src="diagram.png" alt="Diagrama Sintático" style="background-color: #FFFFFF;">
