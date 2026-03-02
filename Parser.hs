@@ -6,6 +6,8 @@ where
 import Lexer (Lexer (..), selectNext)
 import Token (Kind (..), Token (..), Value (..))
 
+-- TODO change names to better reflect fuctions, selectNext -> getActualNextValNewLex, getNext -> evalueateNextValueDontChangeLex
+
 getNextKind :: Lexer -> Token.Kind
 getNextKind lex = kind (next lex)
 
@@ -14,41 +16,34 @@ getNextValue lex = value (next lex)
 
 getValueInt :: Token.Value -> Int
 getValueInt (Right val) = val
-getValueInt _ = error "Error: NaN" -- Should only occur if token 'kind' is INT and 'value' is of type string
+getValueInt _ = error "[Lexer] Token of type INT presenting NaN value" -- Should only occur if token 'kind' is INT and 'value' is of type string, eg lexer made a mistake
 
 run :: String -> Int
 run source =
-  -- EOF represents initial non existent token for passing to getNext to get actual first token
-  parseExpression (selectNext $ Lexer source (-1) (Token Token.EOF (Left "\0")))
+  snd $ parseExpression (selectNext $ Lexer source (-1) (Token Token.EOF (Left "\0")))
 
-parseExpression :: Lexer -> Int -- Receives INITIAL lexer
+-- EOF represents initial non existent token for passing to getNext to get actual first token
+
+parseExpression :: Lexer -> (Lexer, Int)
 parseExpression lex
-  | getNextKind lex == Token.INT = snd (parseExpression' (selectNext lex) (getValueInt $ getNextValue lex))
-  | getNextKind lex == Token.PLUS = error "Error: must not start with operand +"
-  | getNextKind lex == Token.MINUS = error "Error: must not start with operand -"
-  | getNextKind lex == Token.EOF = 0
-  | otherwise = error "Error: invalid token"
+  | getNextKind lex == Token.INT = parseExpression' (selectNext lex) (getValueInt $ getNextValue lex)
+  | getNextKind lex == Token.PLUS = error "[Parser] expected INT"
+  | getNextKind lex == Token.MINUS = error "[Parser] expected INT"
+  | getNextKind lex == Token.EOF = error "[Parser] expected INT"
+  | otherwise = error "[Parser] invalid token"
 
-parseExpression' :: Lexer -> Int -> (Lexer, Int) -- When value was Int and now needs to be operand
+parseExpression' :: Lexer -> Int -> (Lexer, Int)
 parseExpression' lex val
   | getNextKind lex == Token.EOF = (lex, val)
-  | getNextKind lex == Token.PLUS = parseExpressionOperand (selectNext lex) val Token.PLUS
-  | getNextKind lex == Token.MINUS = parseExpressionOperand (selectNext lex) val Token.MINUS
-  | getNextKind lex == Token.INT = error "Error: expected operand + or -"
-  | otherwise = error "Error: No token matched"
-
-parseExpressionOperand :: Lexer -> Int -> Token.Kind -> (Lexer, Int) -- When value was Int and now needs to be operand
-parseExpressionOperand lex val operand
-  | operand == Token.PLUS =
-      (selectNext lex, val + snd (parseExpressionInt lex val))
-  | operand == Token.MINUS =
-      (selectNext lex, val - snd (parseExpressionInt lex val))
-  | otherwise = error "Error: invalid operator kind" -- Should only trigger when calling wrong, non existing token type
-
-parseExpressionInt :: Lexer -> Int -> (Lexer, Int)
-parseExpressionInt lex val
-  | getNextKind lex == Token.EOF = error "Error must have int after operator"
-  | getNextKind lex == Token.PLUS = error "Error: must have int after operator"
-  | getNextKind lex == Token.MINUS = error "Error must have int after operator"
-  | getNextKind lex == Token.INT = parseExpression' (selectNext lex) (getValueInt $ getNextValue lex)
-  | otherwise = error "Error: No token matched"
+  | getNextKind lex == Token.PLUS =
+      if getNextKind (selectNext lex) == Token.INT
+        then
+          parseExpression' (selectNext (selectNext lex)) (val + getValueInt (getNextValue (selectNext lex)))
+        else error "[Parser] expected INT after +"
+  | getNextKind lex == Token.MINUS =
+      if getNextKind (selectNext lex) == Token.INT
+        then
+          parseExpression' (selectNext (selectNext lex)) (val - getValueInt (getNextValue (selectNext lex)))
+        else error "[Parser] expected INT after -"
+  | getNextKind lex == Token.INT = error "[Parser] expected OPERAND + or -"
+  | otherwise = error "[Parser] invalid token"

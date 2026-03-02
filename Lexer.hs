@@ -24,7 +24,7 @@ selectNext (Lexer source position next)
   | isDigit nextChar =
       selectNextParseInt (Lexer source nextPos next) ""
   | nextChar == ' ' = selectNext (Lexer source nextPos next) -- If space proceed to next position
-  | otherwise = error "Error: invalid token"
+  | otherwise = error "[Lexer] invalid token"
   where
     nextChar = source !! (position + 1)
     nextPos = position + 1
@@ -41,7 +41,7 @@ selectNextParseInt (Lexer source position next) buildingInt
         )
         (buildingInt ++ [currentChar])
   | otherwise =
-      Lexer source (position - 1) (Token Token.INT (Right $ read buildingInt))
       -- position - 1, since the loop preemptively adds 1, when its over it will be on the next char, but finished
+      Lexer source (position - 1) (Token Token.INT (Right $ read buildingInt))
   where
     currentChar = source !! position
