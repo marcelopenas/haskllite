@@ -3,58 +3,62 @@ module Parser
   )
 where
 
+import Data.Bits (Bits (xor))
 import Lexer (Lexer (..), getNext)
 import Token (Kind (..), Token (..), Value (..))
-import Data.Bits (Bits(xor))
 
-evaluateNextKind :: Lexer -> Token.Kind
-evaluateNextKind lex = kind (next lex)
+evalNextKind :: Lexer -> Token.Kind
+evalNextKind lex = kind (next lex)
 
-evaluateNextValue :: Lexer -> Token.Value
-evaluateNextValue lex = value (next lex)
+evalNextValue :: Lexer -> Token.Value
+evalNextValue lex = value (next lex)
 
-evaluateValueInt :: Token.Value -> Int
-evaluateValueInt (Right val) = val
-evaluateValueInt _ = error "[Lexer] Token of type INT presenting NaN value" -- If token 'kind' is INT and 'value' is of type string, lexer made a mistake
+evalValueInt :: Token.Value -> Int
+evalValueInt (Right val) = val
+evalValueInt _ = error "[Lexer] Token of type INT presenting NaN value" -- If token 'kind' is INT and 'value' is of type string, lexer made a mistake
 
--- EOF represents initial non existent token for passing to evaluateNext to get actual first token
+-- EOF represents initial non existent token for passing to evalNext to get actual first token
 run :: String -> Int
 run source =
   snd $ parseExpression (getNext $ Lexer source (-1) (Token Token.EOF (Left "\0")))
 
-parseExpression :: Lexer-> (Lexer, Int)
+parseExpression :: Lexer -> (Lexer, Int)
 parseExpression lex
-  | evaluateNextKind lex == Token.INT = parseExpression' (getNext lex) (evaluateValueInt $ evaluateNextValue lex)
-  | evaluateNextKind lex == Token.PLUS = error "[Parser] expected INT"
-  | evaluateNextKind lex == Token.MINUS = error "[Parser] expected INT"
-  | evaluateNextKind lex == Token.XOR = error "[Parser] expected INT"
-  | evaluateNextKind lex == Token.EOF = error "[Parser] expected INT"
-  | otherwise = error "[Parser] invalid token"
+  | evalNextKind lex == Token.PLUS = error "[Parser] expected INT"
+  | evalNextKind lex == Token.MINUS = error "[Parser] expected INT"
+  | evalNextKind lex == Token.XOR = error "[Parser] expected INT"
+  | evalNextKind lex == Token.EOF = error "[Parser] expected INT"
+  | otherwise = parseTerm lex
 
 parseExpression' :: Lexer -> Int -> (Lexer, Int)
-parseExpression' lex val
-  | evaluateNextKind lex == Token.EOF = (lex, val)
-  | evaluateNextKind lex == Token.PLUS =
-    (getNext lex, snd (parseExpression (getNext lex)) + val)
-  | evaluateNextKind lex == Token.MINUS =
-    (getNext lex, snd (parseExpression (getNext lex)) - val)
-  | evaluateNextKind lex == Token.XOR =
-    (getNext lex, snd (parseExpression (getNext lex)) `xor` val)
-  | evaluateNextKind lex == Token.INT = error "[Parser] expected OPERAND (+, -, ^)"
-  | otherwise = error "[Parser] invalid token"
+parseExpression' lex acc
+  | evalNextKind lex == Token.PLUS =
+      (getNext lex, acc + result)
+  | evalNextKind lex == Token.MINUS =
+      (getNext lex, acc - result)
+  | evalNextKind lex == Token.XOR =
+      (getNext lex, acc `xor` result)
+  | evalNextKind lex == Token.INT = error "[Parser] expected OPERAND (+, -, ^)"
+  | otherwise = (lex, acc)
+  where
+    result = snd (parseExpression (getNext lex))
 
-parseTerm :: Lexer-> (Lexer, Int)
+parseTerm :: Lexer -> (Lexer, Int)
 parseTerm lex
-  | evaluateNextKind lex == Token.INT = parseTerm' (getNext lex) (evaluateValueInt $ evaluateNextValue lex)
-  | evaluateNextKind lex == Token.MULT = error "[Parser] expected INT"
-  | evaluateNextKind lex == Token.DIV = error "[Parser] expected INT"
+  | evalNextKind lex == Token.MULT = error "[Parser] expected INT"
+  | evalNextKind lex == Token.DIV = error "[Parser] expected INT"
+  | evalNextKind lex == Token.INT = parseTerm' (getNext lex) intVal
+  | otherwise = error "[Parser] invalid token"
+  where
+    intVal = evalValueInt $ evalNextValue lex
 
 parseTerm' :: Lexer -> Int -> (Lexer, Int)
-parseTerm' lex val
-  | evaluateNextKind lex == Token.EOF = (lex, val)
-  | evaluateNextKind lex == Token.MULT =
-    (getNext lex, snd (parseTerm (getNext lex)) + val)
-  | evaluateNextKind lex == Token.DIV =
-    (getNext lex, snd (parseTerm (getNext lex)) - val)
-  | evaluateNextKind lex == Token.INT = error "[Parser] expected OPERAND (*, /)"
-  | otherwise = error "[Parser] invalid token"
+parseTerm' lex acc
+  | evalNextKind lex == Token.MULT =
+      (getNext lex, acc * result)
+  | evalNextKind lex == Token.DIV =
+      (getNext lex, acc `div` result)
+  | evalNextKind lex == Token.INT = error "[Parser] expected OPERAND (*, /)"
+  | otherwise = parseExpression' lex acc
+  where
+    result = snd (parseExpression (getNext lex))
