@@ -13,9 +13,7 @@ data Lexer = Lexer
     position :: Int,
     next :: Token
   }
-  deriving (Show)
 
--- ? should numeric values evaluate to INT here and 'value' be 'Either String Int' ?
 getNext :: Lexer -> Lexer
 getNext (Lexer source position next)
   | length source <= nextPos = Lexer source nextPos (Token Token.EOF (Left "\0"))
@@ -23,6 +21,8 @@ getNext (Lexer source position next)
   | nextChar == '+' = Lexer source nextPos (Token Token.PLUS (Left "+"))
   | nextChar == '-' = Lexer source nextPos (Token Token.MINUS (Left "-"))
   | nextChar == '^' = Lexer source nextPos (Token Token.XOR (Left "^"))
+  | nextChar == '*' = Lexer source nextPos (Token Token.MULT (Left "*"))
+  | nextChar == '/' = Lexer source nextPos (Token Token.DIV (Left "/"))
   | isDigit nextChar =
       getNextParseInt (Lexer source nextPos next) ""
   | nextChar == ' ' = getNext (Lexer source nextPos next) -- If space proceed to next position

@@ -10,6 +10,22 @@
 
 ![Diagrama Sintático](diagram.png)
 
+## EBNF
+
+```ebnf
+expr = term, { ( '+' | '-' | '^' ) , term };
+
+term = { exponent, ( '*' | '/' ) }, exponent;
+
+exponent = {factor, ('**')}, factor;
+
+factor = integer | '(', expr, ')';
+
+integer = [ '-' ], digit, { digit };
+
+digit = '0' | '1' | '...' | '9';
+```
+
 ## Tagging
 
 vX.Y.Z - For normal

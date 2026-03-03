@@ -5,7 +5,7 @@ module Token
   )
 where
 
-data Kind = INT | PLUS | MINUS | XOR | EOF deriving (Show, Eq, Enum, Bounded)
+data Kind = INT | PLUS | MINUS | XOR | MULT | DIV | POWER | OPEN_PAR | CLOSE_PAR | EOF deriving (Eq, Enum, Bounded)
 
 type Value = Either String Int
 
@@ -13,4 +13,3 @@ data Token = Token
   { kind :: Kind,
     value :: Value
   }
-  deriving (Show)
