@@ -12,7 +12,7 @@ data Lexer = Lexer
   { source :: String,
     position :: Int,
     next :: Token
-  }
+  } deriving (Show)
 
 getNext :: Lexer -> Lexer
 getNext (Lexer source position next)
