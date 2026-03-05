@@ -13,6 +13,6 @@ firstElement :: [element] -> Maybe element -- Gets first element from list if it
 firstElement [] = Nothing
 firstElement (x : _) = Just x
 
-compilerEntry :: Maybe String -> (Lexer, Int) -- Verifies if input is sane
+compilerEntry :: Maybe String -> Int -- Verifies if input is sane
 compilerEntry Nothing = error "[Invocation] must pass argument"
 compilerEntry (Just compilerInput) = run compilerInput

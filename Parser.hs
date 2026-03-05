@@ -18,23 +18,17 @@ evalValueInt (Right val) = val
 evalValueInt _ = error "[Lexer] Token of type INT presenting NaN value" -- If token 'kind' is INT and 'value' is of type string, lexer made a mistake
 
 -- EOF represents initial non existent token for passing to evalNext to get actual first token
-run :: String -> (Lexer, Int)
+run :: String -> Int
 run source =
-  parseExpression initialLexer initialVal
+  snd (parseExpression initialLexer initialVal)
   where
-    invalidLexer = Lexer source (-1) (Token Token.INT (Right 42))
+    invalidLexer = Lexer source (-1) (Token Token.EOF (Left "\0"))
     (initialLexer, initialVal) = parseExpressionInt $ getNext invalidLexer
 
 parseExpression :: Lexer -> Int -> (Lexer, Int)
 parseExpression lex val
   | evalNextKind lex == Token.EOF = (lex, val)
   | otherwise =
-      -- \| otherwise = do
-      -- let newLex = getNext lex
-      -- let (newLex, newVal) = parseExpressionOperand lex val
-      -- (lex, val)
-      -- (newLex, newVal)
-      -- parseExpression lex newVal
       uncurry parseExpression (parseExpressionOperand lex val)
 
 parseExpressionInt :: Lexer -> (Lexer, Int)
@@ -47,24 +41,14 @@ parseExpressionInt lex
 
 parseExpressionOperand :: Lexer -> Int -> (Lexer, Int)
 parseExpressionOperand lex acc
-  | evalNextKind lex == Token.PLUS =
-      do
-        -- (lex, acc)
-        let (nextLex, nexVal) = parseExpressionInt $ getNext lex
-        (nextLex, acc + nexVal)
-  | evalNextKind lex == Token.MINUS =
-      do
-        let (nextLex, nexVal) = parseExpressionInt $ getNext lex
-        (nextLex, acc - nexVal)
-  -- (getNext lex, acc - result)
-  | evalNextKind lex == Token.XOR =
-      (getNext lex, acc `xor` result)
+  | evalNextKind lex == Token.PLUS = (nextLex, acc + nexVal)
+  | evalNextKind lex == Token.MINUS = (nextLex, acc - nexVal)
+  | evalNextKind lex == Token.XOR = (nextLex, acc `xor` nexVal)
   | evalNextKind lex == Token.INT = error "[Parser] expected OPERAND (+, -, ^)"
   | otherwise = (lex, acc)
   where
+    (nextLex, nexVal) = parseExpressionInt $ getNext lex
     result = snd $ parseExpressionInt (getNext lex)
-
--- result = snd (parseExpressionOperand ((getNext lex), acc))
 
 -- parseTerm :: Lexer -> (Lexer, Int)
 -- parseTerm lex
