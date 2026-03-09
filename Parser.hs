@@ -30,25 +30,28 @@ run source =
 parseExpression :: Lexer -> Int -> (Lexer, Int)
 parseExpression lex acc
   | evalNextKind lex == Token.EOF = (lex, acc)
+  | evalNextKind lex == Token.PLUS = error "[Parser] [Expression] expected TERM, not +"
+  | evalNextKind lex == Token.MINUS = error "[Parser] [Expression] expected TERM, not -"
   | otherwise =
       uncurry parseExpression $ uncurry parseExpressionOperand (parseTerm lex acc)
 
 parseExpressionOperand :: Lexer -> Int -> (Lexer, Int)
 parseExpressionOperand lex acc
-  | evalNextKind lex == Token.PLUS = (nextLex, acc + nexVal)
-  | evalNextKind lex == Token.MINUS = (nextLex, acc - nexVal)
-  | evalNextKind lex == Token.XOR = (nextLex, acc `xor` nexVal)
-  | evalNextKind lex == Token.INT = error "[Parser] expected OPERAND (+, -, ^)"
+  | evalNextKind lex == Token.PLUS = (nextLex, acc + nextVal)
+  | evalNextKind lex == Token.MINUS = (nextLex, acc - nextVal)
+  | evalNextKind lex == Token.XOR = (nextLex, acc `xor` nextVal)
+  | evalNextKind lex == Token.INT = error "[Parser] [Expression] expected OPERAND (+, -, ^)"
   | otherwise = parseExpression lex acc
   where
-    (nextLex, nexVal) = parseTerm (getNext lex) acc
+    (nextLex, nextVal) = parseTerm (getNext lex) acc
 
 parseTerm :: Lexer -> Int -> (Lexer, Int)
 parseTerm lex acc
-  | evalNextKind lex == Token.INT = parseTermOperand (getNext lex) intVal
-  | otherwise = (lex, acc)
+  | evalNextKind lex == Token.MULT = error "[Parser] [Term] expected INT, not *"
+  | evalNextKind lex == Token.DIV = error "[Parser] [Term] expected INT, not /"
+  | otherwise = parseTermOperand (getNext nextLex) nextVal
   where
-    intVal = evalValueInt $ evalNextValue lex
+    (nextLex, nextVal) = parseFactor lex acc
 
 parseTermOperand :: Lexer -> Int -> (Lexer, Int)
 parseTermOperand lex acc
@@ -56,15 +59,23 @@ parseTermOperand lex acc
       (nextLex, acc * nextVal)
   | evalNextKind lex == Token.DIV =
       (nextLex, acc `div` nextVal)
-  | evalNextKind lex == Token.INT = error "[Parser] expected OPERAND (*, /)"
+  | evalNextKind lex == Token.INT = error "[Parser] [Term] expected OPERAND (*, /)"
   | otherwise = (lex, acc)
   where
     (nextLex, nextVal) = parseTerm (getNext lex) acc
 
-parseInt :: Lexer -> (Lexer, Int)
-parseInt lex
-  | evalNextKind lex == Token.INT = (nextLex, intVal)
-  | otherwise = error "[Parser] expected INT"
+parseFactor :: Lexer -> Int -> (Lexer, Int)
+parseFactor lex acc
+  | evalNextKind lex == Token.INT = (getNext lex, intVal)
+  | evalNextKind lex == Token.PLUS = (nextLex, acc + nextVal)
+  | evalNextKind lex == Token.MINUS = (nextLex, acc - nextVal)
+  | evalNextKind lex == Token.OPEN_PAR = uncurry parseFactorClose (parseExpression lex acc)
+  | otherwise = error "[Parser] [Factor] expected INT"
   where
-    nextLex = getNext lex
     intVal = evalValueInt $ evalNextValue lex
+    (nextLex, nextVal) = parseFactor (getNext lex) intVal
+
+parseFactorClose  :: Lexer -> Int -> (Lexer, Int)
+parseFactorClose lex acc
+  | evalNextKind lex == Token.CLOSE_PAR = (getNext lex, acc)
+  | otherwise = error "[Parser] [Factor] expected )"

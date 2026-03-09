@@ -23,6 +23,8 @@ getNext (Lexer source position next)
   | nextChar == '^' = Lexer source nextPos (Token Token.XOR (Left "^"))
   | nextChar == '*' = Lexer source nextPos (Token Token.MULT (Left "*"))
   | nextChar == '/' = Lexer source nextPos (Token Token.DIV (Left "/"))
+  | nextChar == '(' = Lexer source nextPos (Token Token.OPEN_PAR (Left "("))
+  | nextChar == ')' = Lexer source nextPos (Token Token.CLOSE_PAR (Left ")"))
   | isDigit nextChar =
       getNextParseInt (Lexer source nextPos next) ""
   | nextChar == ' ' = getNext (Lexer source nextPos next) -- If space proceed to next position
