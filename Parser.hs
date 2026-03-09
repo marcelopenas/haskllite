@@ -23,13 +23,15 @@ run source =
   snd (parseExpression initialLexer initialVal)
   where
     invalidLexer = Lexer source (-1) (Token Token.EOF (Left "\0"))
-    (initialLexer, initialVal) = parseInt $ getNext invalidLexer
+    initialLexer = getNext invalidLexer
+    initialVal = 0
+    -- (initialLexer, initialVal) = parseInt $ getNext invalidLexer
 
 parseExpression :: Lexer -> Int -> (Lexer, Int)
 parseExpression lex acc
   | evalNextKind lex == Token.EOF = (lex, acc)
   | otherwise =
-      uncurry parseTerm (parseTermOperand lex acc)
+      uncurry parseExpression $ uncurry parseExpressionOperand (parseTerm lex acc)
 
 parseExpressionOperand :: Lexer -> Int -> (Lexer, Int)
 parseExpressionOperand lex acc
@@ -37,18 +39,14 @@ parseExpressionOperand lex acc
   | evalNextKind lex == Token.MINUS = (nextLex, acc - nexVal)
   | evalNextKind lex == Token.XOR = (nextLex, acc `xor` nexVal)
   | evalNextKind lex == Token.INT = error "[Parser] expected OPERAND (+, -, ^)"
-  | otherwise = (lex, acc)
+  | otherwise = parseExpression lex acc
   where
-    (nextLex, nexVal) = parseInt $ getNext lex
+    (nextLex, nexVal) = parseTerm (getNext lex) acc
 
 parseTerm :: Lexer -> Int -> (Lexer, Int)
 parseTerm lex acc
-  -- | evalNextKind lex == Token.EOF = (lex, acc)
   | evalNextKind lex == Token.INT = parseTermOperand (getNext lex) intVal
-  | otherwise = parseExpressionOperand lex acc
-  -- | otherwise = (lex, acc)
-  -- | otherwise = error "[Parser] expected INT"
-  -- | otherwise = parseTermOperand (getNext lex) intVal
+  | otherwise = (lex, acc)
   where
     intVal = evalValueInt $ evalNextValue lex
 
@@ -59,9 +57,7 @@ parseTermOperand lex acc
   | evalNextKind lex == Token.DIV =
       (nextLex, acc `div` nextVal)
   | evalNextKind lex == Token.INT = error "[Parser] expected OPERAND (*, /)"
-  -- | otherwise = parseTerm lex acc
   | otherwise = (lex, acc)
-  -- | otherwise = parseTermOperand lex acc
   where
     (nextLex, nextVal) = parseTerm (getNext lex) acc
 
