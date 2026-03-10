@@ -17,15 +17,18 @@ evalValueInt :: Token.Value -> Int
 evalValueInt (Right val) = val
 evalValueInt _ = error "[Lexer] Token of type INT presenting NaN value" -- If token 'kind' is INT and 'value' is of type string, lexer made a mistake
 
--- EOF represents initial non existent token for passing to evalNext to get actual first token
 run :: String -> Int
 run source =
+  -- error $ show initialLexer
   snd (parseExpression initialLexer initialVal)
   where
-    invalidLexer = Lexer source (-1) (Token Token.EOF (Left "\0"))
+    invalidLexer = Lexer source (-1) (Token Token.EOF (Left "\0")) -- EOF represents initial non existent token for passing to evalNext to get actual first token
     initialLexer = getNext invalidLexer
     initialVal = 0
-    -- (initialLexer, initialVal) = parseInt $ getNext invalidLexer
+
+-- (initialLexer, initialVal) = parseInt $ getNext invalidLexer
+
+-- * EXPRESSION
 
 parseExpression :: Lexer -> Int -> (Lexer, Int)
 parseExpression lex acc
@@ -33,7 +36,9 @@ parseExpression lex acc
   | evalNextKind lex == Token.PLUS = error "[Parser] [Expression] expected TERM, not +"
   | evalNextKind lex == Token.MINUS = error "[Parser] [Expression] expected TERM, not -"
   | otherwise =
-      uncurry parseExpression $ uncurry parseExpressionOperand (parseTerm lex acc)
+      uncurry parseExpression $ parseExpressionOperand nextLex nextVal
+  where
+    (nextLex, nextVal) = parseTerm lex acc
 
 parseExpressionOperand :: Lexer -> Int -> (Lexer, Int)
 parseExpressionOperand lex acc
@@ -41,17 +46,20 @@ parseExpressionOperand lex acc
   | evalNextKind lex == Token.MINUS = (nextLex, acc - nextVal)
   | evalNextKind lex == Token.XOR = (nextLex, acc `xor` nextVal)
   | evalNextKind lex == Token.INT = error "[Parser] [Expression] expected OPERAND (+, -, ^)"
-  | otherwise = parseExpression lex acc
+  | otherwise = (lex, acc)
   where
     (nextLex, nextVal) = parseTerm (getNext lex) acc
+
+-- * TERM
 
 parseTerm :: Lexer -> Int -> (Lexer, Int)
 parseTerm lex acc
   | evalNextKind lex == Token.MULT = error "[Parser] [Term] expected INT, not *"
   | evalNextKind lex == Token.DIV = error "[Parser] [Term] expected INT, not /"
-  | otherwise = parseTermOperand (getNext nextLex) nextVal
-  where
-    (nextLex, nextVal) = parseFactor lex acc
+  -- | otherwise = uncurry parseTerm $ parseTermOperand nextLex nextVal
+  | otherwise = uncurry parseTermOperand (parseFactor lex acc)
+  -- where
+    -- (nextLex, nextVal) = parseFactor lex acc
 
 parseTermOperand :: Lexer -> Int -> (Lexer, Int)
 parseTermOperand lex acc
@@ -64,6 +72,8 @@ parseTermOperand lex acc
   where
     (nextLex, nextVal) = parseTerm (getNext lex) acc
 
+-- * FACTOR
+
 parseFactor :: Lexer -> Int -> (Lexer, Int)
 parseFactor lex acc
   | evalNextKind lex == Token.INT = (getNext lex, intVal)
@@ -75,7 +85,7 @@ parseFactor lex acc
     intVal = evalValueInt $ evalNextValue lex
     (nextLex, nextVal) = parseFactor (getNext lex) intVal
 
-parseFactorClose  :: Lexer -> Int -> (Lexer, Int)
+parseFactorClose :: Lexer -> Int -> (Lexer, Int)
 parseFactorClose lex acc
   | evalNextKind lex == Token.CLOSE_PAR = (getNext lex, acc)
   | otherwise = error "[Parser] [Factor] expected )"

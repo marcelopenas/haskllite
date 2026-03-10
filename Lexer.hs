@@ -30,8 +30,8 @@ getNext (Lexer source position next)
   | nextChar == ' ' = getNext (Lexer source nextPos next) -- If space proceed to next position
   | otherwise = error "[Lexer] invalid token"
   where
-    nextChar = source !! (position + 1)
     nextPos = position + 1
+    nextChar = source !! nextPos
 
 -- Receives current pos and works from there, returns: end of int +1 = pos
 getNextParseInt :: Lexer -> String -> Lexer
