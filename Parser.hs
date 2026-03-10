@@ -19,14 +19,11 @@ evalValueInt _ = error "[Lexer] Token of type INT presenting NaN value" -- If to
 
 run :: String -> Int
 run source =
-  -- error $ show initialLexer
-  snd (parseExpression initialLexer initialVal)
+  error $ show (parseExpression initialLexer initialVal)
   where
     invalidLexer = Lexer source (-1) (Token Token.EOF (Left "\0")) -- EOF represents initial non existent token for passing to evalNext to get actual first token
     initialLexer = getNext invalidLexer
     initialVal = 0
-
--- (initialLexer, initialVal) = parseInt $ getNext invalidLexer
 
 -- * EXPRESSION
 
@@ -56,10 +53,10 @@ parseTerm :: Lexer -> Int -> (Lexer, Int)
 parseTerm lex acc
   | evalNextKind lex == Token.MULT = error "[Parser] [Term] expected INT, not *"
   | evalNextKind lex == Token.DIV = error "[Parser] [Term] expected INT, not /"
-  -- | otherwise = uncurry parseTerm $ parseTermOperand nextLex nextVal
-  | otherwise = uncurry parseTermOperand (parseFactor lex acc)
-  -- where
-    -- (nextLex, nextVal) = parseFactor lex acc
+  | otherwise = uncurry parseTerm $ parseTermOperand nextLex nextVal
+  -- | otherwise = uncurry parseTermOperand (parseFactor lex acc)
+  where
+    (nextLex, nextVal) = parseFactor lex acc
 
 parseTermOperand :: Lexer -> Int -> (Lexer, Int)
 parseTermOperand lex acc
@@ -77,15 +74,16 @@ parseTermOperand lex acc
 parseFactor :: Lexer -> Int -> (Lexer, Int)
 parseFactor lex acc
   | evalNextKind lex == Token.INT = (getNext lex, intVal)
-  | evalNextKind lex == Token.PLUS = (nextLex, acc + nextVal)
-  | evalNextKind lex == Token.MINUS = (nextLex, acc - nextVal)
-  | evalNextKind lex == Token.OPEN_PAR = uncurry parseFactorClose (parseExpression lex acc)
+  -- | evalNextKind lex == Token.INT = (getNext nextLex, nextVal)
+  -- | evalNextKind lex == Token.PLUS = (nextLex, acc + nextVal)
+  -- | evalNextKind lex == Token.MINUS = (nextLex, acc - nextVal)
+  -- | evalNextKind lex == Token.OPEN_PAR = uncurry parseFactorClose (parseExpression lex acc)
   | otherwise = error "[Parser] [Factor] expected INT"
   where
     intVal = evalValueInt $ evalNextValue lex
     (nextLex, nextVal) = parseFactor (getNext lex) intVal
 
-parseFactorClose :: Lexer -> Int -> (Lexer, Int)
-parseFactorClose lex acc
-  | evalNextKind lex == Token.CLOSE_PAR = (getNext lex, acc)
-  | otherwise = error "[Parser] [Factor] expected )"
+-- parseFactorClose :: Lexer -> Int -> (Lexer, Int)
+-- parseFactorClose lex acc
+--   | evalNextKind lex == Token.CLOSE_PAR = (getNext lex, acc)
+--   | otherwise = error "[Parser] [Factor] expected )"
