@@ -16,16 +16,16 @@ evalNextValue lex = Token.value (next lex)
 
 evalValueInt :: Token.Value -> Int
 evalValueInt (Right val) = val
-evalValueInt _ = error "[Lexer] Token of type INT presenting NaN value" -- If token 'kind' is INT and 'value' is of type string, lexer made a mistake
 
 run :: String -> Node
 run source =
-  parseExpression initialLexer
+  -- parseExpression initialLexer
   -- leftRotate $ parseExpression initialLexer
   -- error $ show $ reverseTree (parseExpression initialLexer)
-  -- rotateN (treeDepth (parseExpression initialLexer)) (parseExpression initialLexer)
-  -- error $ show $ leftRotate (parseExpression initialLexer)
+  rotateN (treeDepth (parseExpression initialLexer)) (parseExpression initialLexer)
   where
+    -- error $ show $ leftRotate (parseExpression initialLexer)
+
     invalidLexer = Lexer source (-1) (Token Token.EOF (Left "\0")) -- EOF represents initial non existent token for passing to evalNext to get actual first token
     initialLexer = getNext invalidLexer
 
@@ -41,20 +41,20 @@ maxChildDepth xs = maximum (map treeDepth xs)
 
 rotateN :: Int -> Node -> Node
 rotateN n node
-  | n <= 0    = node
+  | n <= 0 = node
   | otherwise = rotateN (n - 1) (leftRotate node)
 
 leftRotate :: Node -> Node
-leftRotate (BinOp opP [lP, BinOp opC [lC, rC]]) = 
-    BinOp opC [BinOp opP [lP, lC], rC]
+leftRotate (BinOp opP [lP, BinOp opC [lC, rC]]) =
+  BinOp opC [BinOp opP [lP, lC], rC]
 leftRotate n = n
 
 reverseTree :: Node -> Node
 reverseTree (IntNode val) = IntNode val
-reverseTree (UnOp op children) = 
-    UnOp op (reverse (map reverseTree children))
-reverseTree (BinOp op children) = 
-    BinOp op (reverse (map reverseTree children))
+reverseTree (UnOp op children) =
+  UnOp op (reverse (map reverseTree children))
+reverseTree (BinOp op children) =
+  BinOp op (reverse (map reverseTree children))
 
 -- parseExpression :: Lexer -> Node
 -- parseExpression lex
@@ -89,7 +89,7 @@ parseFactor :: Lexer -> Node
 parseFactor lex = do
   case evalNextKind lex of
     Token.INT -> Semantic.IntNode (evalValueInt $ evalNextValue lex)
-    _ -> error "[Parser] [Factor] expected INT"
+    _ -> error $ "[Parser] [Factor] expected INT at position " ++ show (Lexer.position lex) ++ ", got " ++ show (evalNextKind lex)
 
 -- * EXPRESSION
 
@@ -113,7 +113,6 @@ parseFactor lex = do
 --       Node IntVal (Right (evalValueInt $ evalNextValue lex)) [x, parseExpression $ getNext lex]
 --   | otherwise =
 --       Node IntVal (Right (evalValueInt $ evalNextValue lex)) []
-
 
 -- parseExpression :: Lexer -> Node -> (Lexer, Node)
 -- parseExpression lex acc

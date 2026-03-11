@@ -29,7 +29,7 @@ getNext (Lexer source position next)
   | isDigit nextChar =
       getNextParseInt (newLex next) ""
   | nextChar == ' ' = getNext (newLex next) -- If space proceed to next position
-  | otherwise = error "[Lexer] invalid token"
+  | otherwise = error $ "[Lexer] invalid token at position " ++ show position ++ "got " ++ show nextChar
   where
     nextPos = position + 1
     nextChar = source !! nextPos
