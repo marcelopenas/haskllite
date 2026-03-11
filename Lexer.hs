@@ -12,26 +12,28 @@ data Lexer = Lexer
   { source :: String,
     position :: Int,
     next :: Token
-  } deriving (Show)
+  }
+  deriving (Show)
 
 getNext :: Lexer -> Lexer
 getNext (Lexer source position next)
-  | length source <= nextPos = Lexer source nextPos (Token Token.EOF (Left "\0"))
-  | nextChar == '\0' = Lexer source nextPos (Token Token.EOF (Left "\0"))
-  | nextChar == '+' = Lexer source nextPos (Token Token.PLUS (Left "+"))
-  | nextChar == '-' = Lexer source nextPos (Token Token.MINUS (Left "-"))
-  | nextChar == '^' = Lexer source nextPos (Token Token.XOR (Left "^"))
-  | nextChar == '*' = Lexer source nextPos (Token Token.MULT (Left "*"))
-  | nextChar == '/' = Lexer source nextPos (Token Token.DIV (Left "/"))
-  | nextChar == '(' = Lexer source nextPos (Token Token.OPEN_PAR (Left "("))
-  | nextChar == ')' = Lexer source nextPos (Token Token.CLOSE_PAR (Left ")"))
+  | length source <= nextPos = newLex $ Token Token.EOF (Left "\0")
+  | nextChar == '\0' = newLex $ Token Token.EOF (Left "\0")
+  | nextChar == '+' = newLex $ Token Token.PLUS (Left "+")
+  | nextChar == '-' = newLex $ Token Token.MINUS (Left "-")
+  | nextChar == '^' = newLex $ Token Token.XOR (Left "^")
+  | nextChar == '*' = newLex $ Token Token.MULT (Left "*")
+  | nextChar == '/' = newLex $ Token Token.DIV (Left "/")
+  | nextChar == '(' = newLex $ Token Token.OPEN_PAR (Left "(")
+  | nextChar == ')' = newLex $ Token Token.CLOSE_PAR (Left ")")
   | isDigit nextChar =
-      getNextParseInt (Lexer source nextPos next) ""
-  | nextChar == ' ' = getNext (Lexer source nextPos next) -- If space proceed to next position
+      getNextParseInt (newLex next) ""
+  | nextChar == ' ' = getNext (newLex next) -- If space proceed to next position
   | otherwise = error "[Lexer] invalid token"
   where
     nextPos = position + 1
     nextChar = source !! nextPos
+    newLex = Lexer source nextPos
 
 -- Receives current pos and works from there, returns: end of int +1 = pos
 getNextParseInt :: Lexer -> String -> Lexer
