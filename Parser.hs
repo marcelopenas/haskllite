@@ -19,12 +19,17 @@ evalValueInt (Right val) = val
 
 run :: String -> Node
 run source =
+  -- error $ show $ parseExpression initialLexer
   -- parseExpression initialLexer
   -- leftRotate $ parseExpression initialLexer
   -- error $ show $ reverseTree (parseExpression initialLexer)
-  rotateN (treeDepth (parseExpression initialLexer)) (parseExpression initialLexer)
-  -- error $ show $ rotateN (treeDepth (parseExpression initialLexer)) (parseExpression initialLexer)
+  -- error $ show $ rotateN (treeDepth (parseExpression initialLexer) - 1) (parseExpression initialLexer)
+  rotateN (treeDepth (parseExpression initialLexer) - 1) (parseExpression initialLexer)
   where
+    -- error $ show $ (parseExpression initialLexer)
+
+    -- error $ show $ rotateN (treeDepth (parseExpression initialLexer)) (parseExpression initialLexer)
+
     -- error $ show $ leftRotate (parseExpression initialLexer)
 
     invalidLexer = Lexer source (-1) (Token Token.EOF (Left "\0")) -- EOF represents initial non existent token for passing to evalNext to get actual first token
@@ -59,14 +64,37 @@ reverseTree (BinOp op children) =
 
 parseExpression :: Lexer -> Node
 parseExpression lex
-  | evalNextKind nextLex == Token.PLUS =
-      Semantic.BinOp "+" [leftNode, parseExpression $ getNext nextLex]
-  | evalNextKind nextLex == Token.MINUS =
-      Semantic.BinOp "-" [leftNode, parseExpression $ getNext nextLex]
+  | nextLexKind == Token.PLUS =
+      Semantic.BinOp "+" [leftNode, rightNode]
+  | nextLexKind == Token.MINUS =
+      Semantic.BinOp "-" [leftNode, rightNode]
   | otherwise = leftNode
   where
     nextLex = getNext lex
+    nextLexKind = evalNextKind nextLex
     leftNode = parseTerm lex
+    rightNode = parseExpression $ getNext nextLex
+
+parseTerm :: Lexer -> Node
+parseTerm lex
+  | nextLexKind == Token.MULT =
+      Semantic.BinOp "*" [leftNode, rightNode]
+  | nextLexKind == Token.DIV =
+      Semantic.BinOp "/" [leftNode, rightNode]
+  | otherwise = leftNode
+  where
+    nextLex = getNext lex
+    nextLexKind = evalNextKind nextLex
+    leftNode = parseFactor lex
+    rightNode = parseExpression $ getNext nextLex
+
+parseFactor :: Lexer -> Node
+parseFactor lex
+  | nextKind == Token.INT = Semantic.IntNode valueInt
+  | otherwise = error $ "[Parser] [Factor] expected INT at position " ++ show (Lexer.position lex) ++ ", got " ++ show (evalNextKind lex)
+  where
+    nextKind = evalNextKind lex
+    valueInt = evalValueInt $ evalNextValue lex
 
 -- parseExpression :: Lexer -> Node
 -- parseExpression lex = do
@@ -77,17 +105,6 @@ parseExpression lex
 --     Token.MINUS -> Semantic.BinOp "-" [leftNode, parseExpression $ getNext nextLex]
 --     _ -> leftNode
 
-parseTerm :: Lexer -> Node
-parseTerm lex
-  | evalNextKind nextLex == Token.MULT =
-      Semantic.BinOp "*" [leftNode, parseExpression $ getNext nextLex]
-  | evalNextKind nextLex == Token.DIV =
-      Semantic.BinOp "/" [leftNode, parseExpression $ getNext nextLex]
-  | otherwise = leftNode
-  where
-    nextLex = getNext lex
-    leftNode = parseFactor lex
-
 -- parseTerm :: Lexer -> Node
 -- parseTerm lex = do
 --   let leftNode = parseFactor lex
@@ -96,12 +113,6 @@ parseTerm lex
 --     Token.MULT -> Semantic.BinOp "*" [leftNode, parseExpression $ getNext nextLex]
 --     Token.DIV -> Semantic.BinOp "/" [leftNode, parseExpression $ getNext nextLex]
 --     _ -> leftNode
-
-parseFactor :: Lexer -> Node
-parseFactor lex = do
-  case evalNextKind lex of
-    Token.INT -> Semantic.IntNode (evalValueInt $ evalNextValue lex)
-    _ -> error $ "[Parser] [Factor] expected INT at position " ++ show (Lexer.position lex) ++ ", got " ++ show (evalNextKind lex)
 
 -- * EXPRESSION
 
