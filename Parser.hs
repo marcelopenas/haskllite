@@ -23,6 +23,7 @@ run source =
   -- leftRotate $ parseExpression initialLexer
   -- error $ show $ reverseTree (parseExpression initialLexer)
   rotateN (treeDepth (parseExpression initialLexer)) (parseExpression initialLexer)
+  -- error $ show $ rotateN (treeDepth (parseExpression initialLexer)) (parseExpression initialLexer)
   where
     -- error $ show $ leftRotate (parseExpression initialLexer)
 
@@ -56,34 +57,45 @@ reverseTree (UnOp op children) =
 reverseTree (BinOp op children) =
   BinOp op (reverse (map reverseTree children))
 
--- parseExpression :: Lexer -> Node
--- parseExpression lex
---   | evalNextKind nextLex == Token.PLUS =
---       Semantic.BinOp "+" [leftNode, parseExpression $ getNext nextLex]
---   | evalNextKind nextLex == Token.MINUS =
---       Semantic.BinOp "-" [leftNode, parseExpression $ getNext nextLex]
---   | otherwise = parseTerm lex
---   where
---     nextLex = getNext lex
---     leftNode = parseTerm lex
-
 parseExpression :: Lexer -> Node
-parseExpression lex = do
-  let leftNode = parseTerm lex
-  let nextLex = getNext lex
-  case evalNextKind nextLex of
-    Token.PLUS -> Semantic.BinOp "+" [leftNode, parseExpression $ getNext nextLex]
-    Token.MINUS -> Semantic.BinOp "-" [leftNode, parseExpression $ getNext nextLex]
-    _ -> leftNode
+parseExpression lex
+  | evalNextKind nextLex == Token.PLUS =
+      Semantic.BinOp "+" [leftNode, parseExpression $ getNext nextLex]
+  | evalNextKind nextLex == Token.MINUS =
+      Semantic.BinOp "-" [leftNode, parseExpression $ getNext nextLex]
+  | otherwise = leftNode
+  where
+    nextLex = getNext lex
+    leftNode = parseTerm lex
+
+-- parseExpression :: Lexer -> Node
+-- parseExpression lex = do
+--   let leftNode = parseTerm lex
+--   let nextLex = getNext lex
+--   case evalNextKind nextLex of
+--     Token.PLUS -> Semantic.BinOp "+" [leftNode, parseExpression $ getNext nextLex]
+--     Token.MINUS -> Semantic.BinOp "-" [leftNode, parseExpression $ getNext nextLex]
+--     _ -> leftNode
 
 parseTerm :: Lexer -> Node
-parseTerm lex = do
-  let leftNode = parseFactor lex
-  let nextLex = getNext lex
-  case evalNextKind nextLex of
-    Token.MULT -> Semantic.BinOp "*" [leftNode, parseTerm $ getNext nextLex]
-    Token.DIV -> Semantic.BinOp "/" [leftNode, parseTerm $ getNext nextLex]
-    _ -> leftNode
+parseTerm lex
+  | evalNextKind nextLex == Token.MULT =
+      Semantic.BinOp "*" [leftNode, parseExpression $ getNext nextLex]
+  | evalNextKind nextLex == Token.DIV =
+      Semantic.BinOp "/" [leftNode, parseExpression $ getNext nextLex]
+  | otherwise = leftNode
+  where
+    nextLex = getNext lex
+    leftNode = parseFactor lex
+
+-- parseTerm :: Lexer -> Node
+-- parseTerm lex = do
+--   let leftNode = parseFactor lex
+--   let nextLex = getNext lex
+--   case evalNextKind nextLex of
+--     Token.MULT -> Semantic.BinOp "*" [leftNode, parseExpression $ getNext nextLex]
+--     Token.DIV -> Semantic.BinOp "/" [leftNode, parseExpression $ getNext nextLex]
+--     _ -> leftNode
 
 parseFactor :: Lexer -> Node
 parseFactor lex = do
