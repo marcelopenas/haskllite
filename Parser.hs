@@ -91,106 +91,12 @@ parseTerm lex
 parseFactor :: Lexer -> Node
 parseFactor lex
   | nextKind == Token.INT = Semantic.IntNode valueInt
+  | nextKind == Token.PLUS = Semantic.UnOp "+" [rightNode]
+  | nextKind == Token.MINUS = Semantic.UnOp "-" [rightNode]
+  -- | nextKind == Token.OPEN_PAR = Semantic.UnOp "-" [rightNode]
   | otherwise = error $ "[Parser] [Factor] expected INT at position " ++ show (Lexer.position lex) ++ ", got " ++ show (evalNextKind lex)
   where
     nextKind = evalNextKind lex
     valueInt = evalValueInt $ evalNextValue lex
-
--- parseExpression :: Lexer -> Node
--- parseExpression lex = do
---   let leftNode = parseTerm lex
---   let nextLex = getNext lex
---   case evalNextKind nextLex of
---     Token.PLUS -> Semantic.BinOp "+" [leftNode, parseExpression $ getNext nextLex]
---     Token.MINUS -> Semantic.BinOp "-" [leftNode, parseExpression $ getNext nextLex]
---     _ -> leftNode
-
--- parseTerm :: Lexer -> Node
--- parseTerm lex = do
---   let leftNode = parseFactor lex
---   let nextLex = getNext lex
---   case evalNextKind nextLex of
---     Token.MULT -> Semantic.BinOp "*" [leftNode, parseExpression $ getNext nextLex]
---     Token.DIV -> Semantic.BinOp "/" [leftNode, parseExpression $ getNext nextLex]
---     _ -> leftNode
-
--- * EXPRESSION
-
--- parseExpression :: Lexer -> Node
--- parseExpression lex
---   | evalNextKind lex == Token.PLUS =
---       Semantic.BinOp "+" [parseExpression $ getNext lex]
---   | evalNextKind lex == Token.MINUS =
---       Semantic.BinOp "-" [parseExpression $ getNext lex]
---   | evalNextKind lex == Token.INT =
---       Semantic.IntNode (evalValueInt $ evalNextValue lex)
---   | otherwise = error "[Parser] [Expression] expected INT, + or -"
-
--- parseExpression :: Lexer -> Node
--- parseExpression lex
---   | x <- parseExpression lex,
---     evalNextKind lex == Token.PLUS =
---       Node BinOp (Left "+") [x, parseExpression $ getNext lex]
---   | x <- parseExpression $ getNext lex,
---     evalNextKind lex == Token.INT =
---       Node IntVal (Right (evalValueInt $ evalNextValue lex)) [x, parseExpression $ getNext lex]
---   | otherwise =
---       Node IntVal (Right (evalValueInt $ evalNextValue lex)) []
-
--- parseExpression :: Lexer -> Node -> (Lexer, Node)
--- parseExpression lex acc
---   | evalNextKind lex == Token.EOF = (lex, acc)
---   | evalNextKind lex == Token.PLUS = error "[Parser] [Expression] expected TERM, not +"
---   | evalNextKind lex == Token.MINUS = error "[Parser] [Expression] expected TERM, not -"
---   | otherwise =
---       uncurry parseExpression $ parseExpressionOperand nextLex nextVal
---   where
---     (nextLex, nextVal) = parseTerm lex acc
-
--- parseExpressionOperand :: Lexer -> Node -> (Lexer, Node)
--- parseExpressionOperand lex acc
---   | evalNextKind lex == Token.PLUS = (getNext lex, Node BinOp (Left "+") [])
---   | evalNextKind lex == Token.MINUS = (getNext lex, Node BinOp (Left "-") [])
---   | evalNextKind lex == Token.INT = error "[Parser] [Expression] expected OPERAND (+, -)"
---   | otherwise = (lex, acc)
-
--- * TERM
-
--- parseTerm :: Lexer -> Int -> (Lexer, Int)
--- parseTerm lex acc
---   | evalNextKind lex == Token.MULT = error "[Parser] [Term] expected INT, not *"
---   | evalNextKind lex == Token.DIV = error "[Parser] [Term] expected INT, not /"
---   | otherwise = uncurry parseTerm $ parseTermOperand nextLex nextVal
---   -- | otherwise = uncurry parseTermOperand (parseFactor lex acc)
---   where
---     (nextLex, nextVal) = parseFactor lex acc
-
--- parseTermOperand :: Lexer -> Int -> (Lexer, Int)
--- parseTermOperand lex acc
---   | evalNextKind lex == Token.MULT =
---       (nextLex, acc * nextVal)
---   | evalNextKind lex == Token.DIV =
---       (nextLex, acc `div` nextVal)
---   | evalNextKind lex == Token.INT = error "[Parser] [Term] expected OPERAND (*, /)"
---   | otherwise = (lex, acc)
---   where
---     (nextLex, nextVal) = parseTerm (getNext lex) acc
-
--- * FACTOR
-
--- parseFactor :: Lexer -> Int -> (Lexer, Int)
--- parseFactor lex acc
---   | evalNextKind lex == Token.INT = (getNext lex, intVal)
---   -- | evalNextKind lex == Token.INT = (getNext nextLex, nextVal)
---   -- | evalNextKind lex == Token.PLUS = (nextLex, acc + nextVal)
---   -- | evalNextKind lex == Token.MINUS = (nextLex, acc - nextVal)
---   -- | evalNextKind lex == Token.OPEN_PAR = uncurry parseFactorClose (parseExpression lex acc)
---   | otherwise = error "[Parser] [Factor] expected INT"
---   where
---     intVal = evalValueInt $ evalNextValue lex
---     (nextLex, nextVal) = parseFactor (getNext lex) intVal
-
--- parseFactorClose :: Lexer -> Int -> (Lexer, Int)
--- parseFactorClose lex acc
---   | evalNextKind lex == Token.CLOSE_PAR = (getNext lex, acc)
---   | otherwise = error "[Parser] [Factor] expected )"
+    nextLex = getNext lex
+    rightNode = parseFactor $ getNext nextLex
