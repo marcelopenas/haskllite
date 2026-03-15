@@ -18,11 +18,9 @@ evalValueInt :: Token.Value -> Int
 evalValueInt (Right val) = val
 
 run :: String -> Node
-run source =
-  -- snd $ parseExpression initialLexer
-  if evalNextKind finalLex == Token.EOF
-     then node
-     else error $ "[Parser] Unexpected token at end of input: " ++ show (evalNextKind finalLex)
+run source
+  | evalNextKind finalLex == Token.EOF = node
+  | otherwise = error $ "[Parser] Unexpected token at end of input: " ++ show (evalNextKind finalLex)
   where
     invalidLexer = Lexer source (-1) (Token Token.EOF (Left "\0")) -- EOF represents initial non existent token for passing to evalNext to get actual first token
     initialLexer = getNext invalidLexer
