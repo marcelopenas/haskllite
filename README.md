@@ -13,11 +13,15 @@
 ## EBNF
 
 ```ebnf
-EXPR = TERM, { ( '+' | '-' ) , TERM };
+EXPRESSION = TERM, { ( '+' | '-' ) , TERM };
 
 TERM = { FACTOR, ( '*' | '/' ) }, FACTOR;
 
-FACTOR = "INT" | ("+" | "-"), FACTOR | "(", EXPR, ")";
+FACTOR = ("+" | "-"), FACTOR | "(", EXPRESSION, ")" | NUMBER;
+
+NUMBER = [ '-' ], DIGIT, { DIGIT };
+
+DIGIT = '0' | '1' | '...' | '9';
 ```
 
 ## Tagging
