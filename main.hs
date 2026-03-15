@@ -1,5 +1,5 @@
 import Data.Char (isDigit, isSpace)
-import Parser (run)
+import Parser2 (run)
 import System.Environment (getArgs)
 import Lexer (Lexer)
 import Semantic (evaluate)
