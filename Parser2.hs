@@ -43,7 +43,7 @@ parseExpressionLoop lex leftNode
 parseTerm :: Lexer -> (Lexer, Node)
 parseTerm lex = parseTermLoop nextLex leftNode
   where
-    (nextLex, leftNode) = parseFactor lex
+    (nextLex, leftNode) = parsePower lex
 
 parseTermLoop :: Lexer -> Node -> (Lexer, Node)
 parseTermLoop lex leftNode
@@ -52,7 +52,15 @@ parseTermLoop lex leftNode
   | otherwise = (lex, leftNode)
   where
     nextKind = evalNextKind lex
-    (nextLex, rightNode) = parseFactor (getNext lex)
+    (nextLex, rightNode) = parsePower (getNext lex)
+
+parsePower :: Lexer -> (Lexer, Node)
+parsePower lex
+  | evalNextKind nextLex == Token.POWER = (nexLexPower, Semantic.BinOp "**" [leftNode, rightNode])
+  | otherwise = (nextLex, leftNode)
+    where
+      (nextLex, leftNode) = parseFactor lex
+      (nexLexPower, rightNode) = parsePower (getNext nextLex)
 
 parseFactor :: Lexer -> (Lexer, Node)
 parseFactor lex

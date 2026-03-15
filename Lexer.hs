@@ -22,7 +22,7 @@ getNext (Lexer source position next)
   | nextChar == '+' = newLex $ Token Token.PLUS (Left "+")
   | nextChar == '-' = newLex $ Token Token.MINUS (Left "-")
   | nextChar == '^' = newLex $ Token Token.XOR (Left "^")
-  | nextChar == '*' = newLex $ Token Token.MULT (Left "*")
+  | nextChar == '*' = getNextParseStar (newLex next)
   | nextChar == '/' = newLex $ Token Token.DIV (Left "/")
   | nextChar == '(' = newLex $ Token Token.OPEN_PAR (Left "(")
   | nextChar == ')' = newLex $ Token Token.CLOSE_PAR (Left ")")
@@ -34,6 +34,17 @@ getNext (Lexer source position next)
     nextPos = position + 1
     nextChar = source !! nextPos
     newLex = Lexer source nextPos
+
+getNextParseStar :: Lexer -> Lexer
+getNextParseStar (Lexer source position next)
+  | nextChar == '*' = newLex $ Token Token.POWER (Left "**")
+  | otherwise = currentLex $ Token Token.MULT (Left "*")
+  where
+    nextPos = position + 1
+    nextChar = source !! nextPos
+    newLex = Lexer source nextPos
+    currentLex = Lexer source position
+
 
 -- Receives current pos and works from there, returns: end of int +1 = pos
 getNextParseInt :: Lexer -> String -> Lexer
