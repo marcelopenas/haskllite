@@ -15,7 +15,7 @@
 ```ebnf
 EXPRESSION = TERM, { ( "+" | "-" ) , TERM };
 
-TERM = { FACTOR, ( "*" | "/" ) }, FACTOR;
+TERM = FACTOR, { FACTOR, ( "*" | "/" ) };
 
 FACTOR = ("+" | "-"), FACTOR | "(", EXPRESSION, ")" | NUMBER;
 
