@@ -5,7 +5,7 @@ module Lexer
 where
 
 import Data.Char (isDigit, isSpace)
-import Token (Token (..))
+import Token 
 
 data Lexer = Lexer
   { source :: String,
@@ -17,7 +17,6 @@ data Lexer = Lexer
 getNext :: Lexer -> Lexer
 getNext (Lexer source position next)
   | length source <= nextPos = newLex Token.EOF
-  | nextCharEq '\0' = newLex Token.EOF
   | nextCharEq '+' = newLex Token.PLUS
   | nextCharEq '-' = newLex Token.MINUS
   | nextCharEq '^' = newLex Token.XOR
@@ -25,8 +24,7 @@ getNext (Lexer source position next)
   | nextCharEq '/' = newLex Token.DIV
   | nextCharEq '(' = newLex Token.OPEN_PAR
   | nextCharEq ')' = newLex Token.CLOSE_PAR
-  | isDigit nextChar =
-      getNextParseInt (newLex next) ""
+  | isDigit nextChar = getNextParseInt (newLex next) ""
   | isSpace nextChar = getNext (newLex next) -- If space proceed to next position
   | otherwise = error $ "[Lexer] invalid token at position " ++ show position ++ "got " ++ show nextChar
   where

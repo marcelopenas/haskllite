@@ -1,8 +1,7 @@
-import Data.Char (isDigit, isSpace)
-import Parser2 (run)
-import System.Environment (getArgs)
 import Lexer (Lexer)
+import Parser (run)
 import Semantic (evaluate)
+import System.Environment (getArgs)
 
 main :: IO ()
 main = do
@@ -14,6 +13,6 @@ firstElement :: [element] -> Maybe element -- Gets first element from list if it
 firstElement [] = Nothing
 firstElement (x : _) = Just x
 
-compilerEntry :: Maybe String ->  Int -- Verifies if input is sane
+compilerEntry :: Maybe String -> Int -- Verifies if input is sane
 compilerEntry Nothing = error "[Invocation] must pass argument"
 compilerEntry (Just compilerInput) = evaluate $ run compilerInput
