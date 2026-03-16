@@ -8,7 +8,7 @@
 
 ## Diagrama sintático
 
-![Diagrama Sintático](diagram.png)
+![Diagrama Sintático](img/diagram.png)
 
 ## EBNF
 
