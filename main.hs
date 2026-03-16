@@ -14,5 +14,5 @@ firstElement [] = Nothing
 firstElement (x : _) = Just x
 
 compilerEntry :: Maybe String -> Int -- Verifies if input is sane
-compilerEntry Nothing = error "[Invocation] must pass argument"
+compilerEntry Nothing = error "[Main] must pass argument"
 compilerEntry (Just compilerInput) = evaluate $ run compilerInput
