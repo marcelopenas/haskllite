@@ -1,4 +1,5 @@
 module Semantic where
+
 -- import Control.Monad (liftM2)
 
 -- data NodeKind = BinOp | UnOp | IntVal deriving (Eq, Show)
@@ -67,3 +68,7 @@ evaluate (BinOp "-" [a, b]) = evaluate a - evaluate b
 evaluate (BinOp "*" [a, b]) = evaluate a * evaluate b
 evaluate (BinOp "/" [a, IntNode 0]) = error "[Semantic] Division by zero"
 evaluate (BinOp "/" [a, b]) = evaluate a `div` evaluate b
+evaluate (BinOp "**" [a, b])
+  | evaluate b < 0 = error "[Semantic] Negative exponent not supported"
+  | otherwise = evaluate a ^ evaluate b
+evaluate (BinOp "**" [a, b]) = evaluate a ^ evaluate b
