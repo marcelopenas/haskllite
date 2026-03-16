@@ -19,14 +19,18 @@ run source
 
 parseExpression :: Lexer -> (Lexer, Node)
 parseExpression lex = parseExpressionLoop nextLex leftNode
+-- parseExpression lex = case nextKind of
+  -- Token.INT val -> parseExpressionLoop nextLex leftNode
+  -- _ -> error "[Parser] expected INT"
   where
+    nextKind = next lex
     (nextLex, leftNode) = parseTerm lex
 
 parseExpressionLoop :: Lexer -> Node -> (Lexer, Node)
-parseExpressionLoop lex leftNode
-  | nextKind == Token.PLUS = parseExpressionLoop nextLex (Semantic.BinOp "+" [leftNode, rightNode])
-  | nextKind == Token.MINUS = parseExpressionLoop nextLex (Semantic.BinOp "-" [leftNode, rightNode])
-  | otherwise = (lex, leftNode)
+parseExpressionLoop lex leftNode = case nextKind of
+  Token.PLUS -> parseExpressionLoop nextLex (Semantic.BinOp "+" leftNode rightNode)
+  Token.MINUS -> parseExpressionLoop nextLex (Semantic.BinOp "-" leftNode rightNode)
+  _ -> (lex, leftNode)
   where
     nextKind = next lex
     (nextLex, rightNode) = parseTerm (getNext lex)
@@ -37,28 +41,25 @@ parseTerm lex = parseTermLoop nextLex leftNode
     (nextLex, leftNode) = parseFactor lex
 
 parseTermLoop :: Lexer -> Node -> (Lexer, Node)
-parseTermLoop lex leftNode
-  | nextKind == Token.MULT = parseTermLoop nextLex (Semantic.BinOp "*" [leftNode, rightNode])
-  | nextKind == Token.DIV = parseTermLoop nextLex (Semantic.BinOp "/" [leftNode, rightNode])
-  | otherwise = (lex, leftNode)
+parseTermLoop lex leftNode = case nextToken of
+  Token.MULT -> parseTermLoop nextLex (Semantic.BinOp "*" leftNode rightNode)
+  Token.DIV -> parseTermLoop nextLex (Semantic.BinOp "/" leftNode rightNode)
+  _ -> (lex, leftNode)
   where
-    nextKind = next lex
+    nextToken = next lex
     (nextLex, rightNode) = parseFactor (getNext lex)
 
 parseFactor :: Lexer -> (Lexer, Node)
-parseFactor lex
-  | nextKind == Token.PLUS = (nextLex, Semantic.UnOp "+" [rightNode])
-  | nextKind == Token.MINUS = (nextLex, Semantic.UnOp "-" [rightNode])
-  | nextKind == Token.OPEN_PAR =
-      if next lexAfterOpen == Token.CLOSE_PAR
-        then (getNext lexAfterOpen, exprNode) -- Consume CLOSE_PAR
-        else error $ "[Parser] Expected CLOSE_PAR at position: " ++ show (Lexer.position lexAfterOpen)
-  | Token.INT val <- nextKind,
-    nextKind == Token.INT val =
-      (getNext lex, Semantic.IntNode val)
-  | otherwise =
-      error $ "[Parser] Expected INT, got: " ++ show nextKind ++ ", at position: " ++ show (Lexer.position lex)
+parseFactor lex = case nextToken of
+  Token.PLUS -> (nextLex, Semantic.UnOp "+" rightNode)
+  Token.MINUS -> (nextLex, Semantic.UnOp "-" rightNode)
+  Token.OPEN_PAR ->
+    if next lexAfterOpen == Token.CLOSE_PAR
+      then (getNext lexAfterOpen, exprNode) -- Consume CLOSE_PAR
+      else error $ "[Parser] Expected CLOSE_PAR at position: " ++ show (Lexer.position lexAfterOpen)
+  (Token.INT val) -> (getNext lex, Semantic.IntNode val)
+  _ -> error $ "[Parser] Expected INT, got: " ++ show nextToken ++ ", at position: " ++ show (Lexer.position lex)
   where
-    nextKind = next lex
+    nextToken = next lex
     (nextLex, rightNode) = parseFactor (getNext lex)
     (lexAfterOpen, exprNode) = parseExpression (getNext lex)

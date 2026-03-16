@@ -4,9 +4,8 @@ module Lexer
   )
 where
 
-import Data.Char (isDigit)
+import Data.Char (isDigit, isSpace)
 import Token (Token (..))
-import Token qualified
 
 data Lexer = Lexer
   { source :: String,
@@ -18,27 +17,28 @@ data Lexer = Lexer
 getNext :: Lexer -> Lexer
 getNext (Lexer source position next)
   | length source <= nextPos = newLex Token.EOF
-  | nextChar == '\0' = newLex Token.EOF
-  | nextChar == '+' = newLex Token.PLUS
-  | nextChar == '-' = newLex Token.MINUS
-  | nextChar == '^' = newLex Token.XOR
-  | nextChar == '*' = getNextParseStar (newLex next)
-  | nextChar == '/' = newLex Token.DIV
-  | nextChar == '(' = newLex Token.OPEN_PAR
-  | nextChar == ')' = newLex Token.CLOSE_PAR
+  | nextCharEq '\0' = newLex Token.EOF
+  | nextCharEq '+' = newLex Token.PLUS
+  | nextCharEq '-' = newLex Token.MINUS
+  | nextCharEq '^' = newLex Token.XOR
+  | nextCharEq '*' = getNextParseStar (newLex next)
+  | nextCharEq '/' = newLex Token.DIV
+  | nextCharEq '(' = newLex Token.OPEN_PAR
+  | nextCharEq ')' = newLex Token.CLOSE_PAR
   | isDigit nextChar =
       getNextParseInt (newLex next) ""
-  | nextChar == ' ' = getNext (newLex next) -- If space proceed to next position
+  | isSpace nextChar = getNext (newLex next) -- If space proceed to next position
   | otherwise = error $ "[Lexer] invalid token at position " ++ show position ++ "got " ++ show nextChar
   where
     nextPos = position + 1
     nextChar = source !! nextPos
     newLex = Lexer source nextPos
+    nextCharEq c = nextChar == c
 
 getNextParseStar :: Lexer -> Lexer
-getNextParseStar (Lexer source position next)
-  -- | nextChar == '*' = newLex Token.POWER
-  | otherwise = currentLex Token.MULT
+getNextParseStar (Lexer source position next) = case nextChar of
+  '*' -> newLex Token.POWER
+  _ -> currentLex Token.MULT
   where
     nextPos = position + 1
     nextChar = source !! nextPos
