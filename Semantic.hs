@@ -1,4 +1,5 @@
 module Semantic where
+import Data.Bits (Bits(xor))
 
 data Node
   = IntNode Int
@@ -12,6 +13,7 @@ evaluate (UnOp "+" a) = evaluate a
 evaluate (UnOp "-" a) = -evaluate a
 evaluate (BinOp "+" a b) = evaluate a + evaluate b
 evaluate (BinOp "-" a b) = evaluate a - evaluate b
+evaluate (BinOp "^" a b) = evaluate a `xor` evaluate b
 evaluate (BinOp "*" a b) = evaluate a * evaluate b
 evaluate (BinOp "/" a (IntNode 0)) = error "[Semantic] Division by zero"
 evaluate (BinOp "/" a b) = evaluate a `div` evaluate b
