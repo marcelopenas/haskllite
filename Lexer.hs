@@ -16,27 +16,30 @@ data Lexer = Lexer
 
 getNext :: Lexer -> Lexer
 getNext (Lexer source position next)
-  | length source <= nextPos = newLex Token.EOF
-  | nextCharEq '+' = newLex Token.PLUS
-  | nextCharEq '-' = newLex Token.MINUS
-  | nextCharEq '^' = newLex Token.XOR
-  | nextCharEq '*' = getNextParseStar (newLex next)
-  | nextCharEq '/' = newLex Token.DIV
-  | nextCharEq '(' = newLex Token.OPEN_PAR
-  | nextCharEq ')' = newLex Token.CLOSE_PAR
-  | nextCharEq '=' = newLex Token.ASSIGN
-  | nextCharEq ';' = newLex Token.END
-  | isAlpha nextChar = case getNextParseIdentifier (newLex next) "" of
-      Lexer _ newPos (Token.IDENTIFIER "println!") -> Lexer source newPos Token.PRINT
+  | length source <= nextPos = newLexPos Token.EOF
+  | nextCharEq '+' = newLexPos Token.PLUS
+  | nextCharEq '-' = newLexPos Token.MINUS
+  | nextCharEq '^' = newLexPos Token.XOR
+  | nextCharEq '*' = getNextParseStar newLexNext
+  | nextCharEq '/' = newLexPos Token.DIV
+  | nextCharEq '(' = newLexPos Token.OPEN_PAR
+  | nextCharEq ')' = newLexPos Token.CLOSE_PAR
+  | nextCharEq '=' = newLexPos Token.ASSIGN
+  | nextCharEq ';' = newLexPos Token.END
+  | isAlpha nextChar = case getNextParseIdentifier newLexNext emptyBuilder of
+      Lexer _ newPos (Token.IDENTIFIER "println!") -> newLex newPos Token.PRINT
       lexWithIdentifier -> lexWithIdentifier
-  | isDigit nextChar = getNextParseInt (newLex next) ""
-  | isSpace nextChar = getNext (newLex next) -- If space or \n proceed to next position
+  | isDigit nextChar = getNextParseInt newLexNext emptyBuilder
+  | isSpace nextChar = getNext newLexNext -- If space or \n proceed to next position
   | otherwise = error $ "[Lexer] invalid token at position " ++ show position ++ "got " ++ show nextChar
   where
     nextPos = position + 1
     nextChar = source !! nextPos
-    newLex = Lexer source nextPos
+    newLex = Lexer source
+    newLexPos = Lexer source nextPos
+    newLexNext = newLexPos next
     nextCharEq c = nextChar == c
+    emptyBuilder = ""
 
 getNextParseStar :: Lexer -> Lexer
 getNextParseStar (Lexer source position next) = case nextChar of
