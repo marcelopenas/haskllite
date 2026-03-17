@@ -4,8 +4,8 @@ module Lexer
   )
 where
 
-import Data.Char (isDigit, isSpace)
-import Token 
+import Data.Char (isAlpha, isAlphaNum, isDigit, isSpace)
+import Token
 
 data Lexer = Lexer
   { source :: String,
@@ -24,8 +24,13 @@ getNext (Lexer source position next)
   | nextCharEq '/' = newLex Token.DIV
   | nextCharEq '(' = newLex Token.OPEN_PAR
   | nextCharEq ')' = newLex Token.CLOSE_PAR
+  | nextCharEq '=' = newLex Token.ASSIGN
+  | nextCharEq ';' = newLex Token.END
+  | isAlpha nextChar = case getNextParseIdentifier (newLex next) "" of
+      Lexer _ newPos (Token.IDENTIFIER "println!") -> Lexer source newPos Token.PRINT
+      lexWithIdentifier -> lexWithIdentifier
   | isDigit nextChar = getNextParseInt (newLex next) ""
-  | isSpace nextChar = getNext (newLex next) -- If space proceed to next position
+  | isSpace nextChar = getNext (newLex next) -- If space or \n proceed to next position
   | otherwise = error $ "[Lexer] invalid token at position " ++ show position ++ "got " ++ show nextChar
   where
     nextPos = position + 1
@@ -42,6 +47,22 @@ getNextParseStar (Lexer source position next) = case nextChar of
     nextChar = source !! nextPos
     newLex = Lexer source nextPos
     currentLex = Lexer source position
+
+-- Receives current pos and works from there, returns: end of identifier +1 = pos
+getNextParseIdentifier :: Lexer -> String -> Lexer
+getNextParseIdentifier (Lexer source position next) buildingIdentifier
+  | position >= length source =
+      Lexer source position (Token.IDENTIFIER (read buildingIdentifier))
+  | isAlphaNumUnderscore currentChar =
+      getNextParseIdentifier
+        (Lexer source (position + 1) (Token.IDENTIFIER "\0")) -- "\0" represents building int token, since it will be replaced by the actual int value when the int is finished
+        (buildingIdentifier ++ [currentChar])
+  | otherwise =
+      -- position - 1, since the loop preemptively adds 1, when its over it will be on the next char, but finished
+      Lexer source (position - 1) (Token.IDENTIFIER (read buildingIdentifier))
+  where
+    isAlphaNumUnderscore c = isAlphaNum c || c == '_'
+    currentChar = source !! position
 
 -- Receives current pos and works from there, returns: end of int +1 = pos
 getNextParseInt :: Lexer -> String -> Lexer

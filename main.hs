@@ -1,18 +1,16 @@
 import Lexer (Lexer)
 import Parser (run)
+import PreProcess (preProcess)
 import Semantic (evaluate)
+import SymbolTable (newSymbolTable)
 import System.Environment (getArgs)
 
 main :: IO ()
 main = do
   args <- getArgs
-  let compilerInput = firstElement args -- Gets run arguments
-  print $ compilerEntry compilerInput -- If first argument exists run
-
-firstElement :: [element] -> Maybe element -- Gets first element from list if it exists
-firstElement [] = Nothing
-firstElement (x : _) = Just x
-
-compilerEntry :: Maybe String -> Int -- Verifies if input is sane
-compilerEntry Nothing = error "[Main] must pass argument"
-compilerEntry (Just compilerInput) = evaluate $ run compilerInput
+  if null args
+    then putStrLn "[Main] no source file provided"
+    else do
+      let filePath = head args
+      compilerInput <- readFile filePath
+      print $ evaluate (run $ preProcess compilerInput) newSymbolTable

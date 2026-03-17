@@ -8,6 +8,8 @@ import Lexer (Lexer (..), getNext, next)
 import Semantic
 import Token
 
+type Parser a = (Lexer, Token) -> (a, (Lexer, Token))
+
 run :: String -> Node
 run source
   | next finalLex == Token.EOF = node

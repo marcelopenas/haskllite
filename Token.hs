@@ -13,5 +13,9 @@ data Token
   | POWER
   | OPEN_PAR
   | CLOSE_PAR
+  | ASSIGN
+  | END
+  | PRINT
+  | IDENTIFIER String
   | EOF
   deriving (Show, Eq)
