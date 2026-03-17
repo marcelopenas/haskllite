@@ -7,77 +7,82 @@ where
 import Data.Char (isAlpha, isAlphaNum, isDigit, isSpace)
 import Token
 
-data Lexer = Lexer
-  { source :: String,
-    position :: Int,
-    next :: Token
-  }
-  deriving (Show)
+type Source = String
+type Position = Int
+data Lexer = Lexer Source Position deriving (Show)
 
-getNext :: Lexer -> Lexer
-getNext (Lexer source position next)
-  | length source <= nextPos = newLexPos Token.EOF
-  | nextCharEq '+' = newLexPos Token.PLUS
-  | nextCharEq '-' = newLexPos Token.MINUS
-  | nextCharEq '^' = newLexPos Token.XOR
-  | nextCharEq '*' = getNextParseStar newLexNext
-  | nextCharEq '/' = newLexPos Token.DIV
-  | nextCharEq '(' = newLexPos Token.OPEN_PAR
-  | nextCharEq ')' = newLexPos Token.CLOSE_PAR
-  | nextCharEq '=' = newLexPos Token.ASSIGN
-  | nextCharEq ';' = newLexPos Token.END
-  | isAlpha nextChar = case getNextParseIdentifier newLexNext emptyBuilder of
-      Lexer _ newPos (Token.IDENTIFIER "println!") -> newLex newPos Token.PRINT
+type LexerState = (Lexer, Token)
+
+getNext :: Lexer -> (Lexer, Token)
+getNext (Lexer source position)
+  | length source <= nextPos = newLexerState Token.EOF
+  | nextCharEq '+' = newLexerState Token.PLUS
+  | nextCharEq '-' = newLexerState Token.MINUS
+  | nextCharEq '^' = newLexerState Token.XOR
+  | nextCharEq '*' = getNextParseStar newLexPos
+  | nextCharEq '/' = newLexerState Token.DIV
+  | nextCharEq '(' = newLexerState Token.OPEN_PAR
+  | nextCharEq ')' = newLexerState Token.CLOSE_PAR
+  | nextCharEq '=' = newLexerState Token.ASSIGN
+  | nextCharEq ';' = newLexerState Token.END
+  | isAlpha nextChar = case getNextParseIdentifier newLexPos emptyBuilder of
+      (Lexer _ newPos, Token.IDENTIFIER "println!") -> (newLex newPos, Token.PRINT)
       lexWithIdentifier -> lexWithIdentifier
-  | isDigit nextChar = getNextParseInt newLexNext emptyBuilder
-  | isSpace nextChar = getNext newLexNext -- If space or \n proceed to next position
+  | isDigit nextChar = getNextParseInt newLexPos emptyBuilder
+  | isSpace nextChar = getNext newLexPos -- If space or \n continue
   | otherwise = error $ "[Lexer] invalid token at position " ++ show position ++ "got " ++ show nextChar
   where
     nextPos = position + 1
     nextChar = source !! nextPos
+
     newLex = Lexer source
-    newLexPos = Lexer source nextPos
-    newLexNext = newLexPos next
+    newLexPos = newLex nextPos
+    newLexerState :: Token -> LexerState
+    newLexerState t = (newLexPos, t)
+
+    nextCharEq :: Char -> Bool
     nextCharEq c = nextChar == c
+
     emptyBuilder = ""
 
-getNextParseStar :: Lexer -> Lexer
-getNextParseStar (Lexer source position next) = case nextChar of
-  '*' -> newLex Token.POWER
-  _ -> currentLex Token.MULT
+getNextParseStar :: Lexer -> LexerState
+getNextParseStar (Lexer source position) = case nextChar of
+  '*' -> (newLex nextPos, Token.POWER)
+  _ -> (newLex position, Token.MULT)
   where
     nextPos = position + 1
     nextChar = source !! nextPos
-    newLex = Lexer source nextPos
-    currentLex = Lexer source position
+    newLex = Lexer source
 
--- Receives current pos and works from there, returns: end of identifier +1 = pos
-getNextParseIdentifier :: Lexer -> String -> Lexer
-getNextParseIdentifier (Lexer source position next) buildingIdentifier
+{-
+For functions that look for len > 1 tokens:
+Receives current pos and works from there, returns: end of token +1 = pos
+On base: position - 1, since the loop preemptively adds 1, when its over it will be on the next char, but finished
+-}
+
+getNextParseIdentifier :: Lexer -> String -> LexerState
+getNextParseIdentifier (Lexer source position) buildingIdentifier
   | position >= length source =
-      Lexer source position (Token.IDENTIFIER (read buildingIdentifier))
+      (Lexer source position, Token.IDENTIFIER (read buildingIdentifier))
   | isAlphaNumUnderscore currentChar =
       getNextParseIdentifier
-        (Lexer source (position + 1) (Token.IDENTIFIER "\0")) -- "\0" represents building int token, since it will be replaced by the actual int value when the int is finished
+        (Lexer source (position + 1))
         (buildingIdentifier ++ [currentChar])
   | otherwise =
-      -- position - 1, since the loop preemptively adds 1, when its over it will be on the next char, but finished
-      Lexer source (position - 1) (Token.IDENTIFIER (read buildingIdentifier))
+      (Lexer source (position - 1), Token.IDENTIFIER (read buildingIdentifier))
   where
     isAlphaNumUnderscore c = isAlphaNum c || c == '_'
     currentChar = source !! position
 
--- Receives current pos and works from there, returns: end of int +1 = pos
-getNextParseInt :: Lexer -> String -> Lexer
-getNextParseInt (Lexer source position next) buildingInt
+getNextParseInt :: Lexer -> String -> LexerState
+getNextParseInt (Lexer source position) buildingInt
   | position >= length source =
-      Lexer source position (Token.INT (read buildingInt))
+      (Lexer source position, Token.INT (read buildingInt))
   | isDigit currentChar =
       getNextParseInt
-        (Lexer source (position + 1) (Token.INT 0)) -- 0 represents building int token, since it will be replaced by the actual int value when the int is finished
+        (Lexer source (position + 1))
         (buildingInt ++ [currentChar])
   | otherwise =
-      -- position - 1, since the loop preemptively adds 1, when its over it will be on the next char, but finished
-      Lexer source (position - 1) (Token.INT (read buildingInt))
+      (Lexer source (position - 1), Token.INT (read buildingInt))
   where
     currentChar = source !! position
