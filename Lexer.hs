@@ -8,7 +8,9 @@ import Data.Char (isAlpha, isAlphaNum, isDigit, isSpace)
 import Token
 
 type Source = String
+
 type Position = Int
+
 data Lexer = Lexer Source Position deriving (Show)
 
 type LexerState = (Lexer, Token)
@@ -30,7 +32,7 @@ getNext (Lexer source position)
       lexWithIdentifier -> lexWithIdentifier
   | isDigit nextChar = getNextParseInt newLexPos emptyBuilder
   | isSpace nextChar = getNext newLexPos -- If space or \n continue
-  | otherwise = error $ "[Lexer] invalid token at position " ++ show position ++ "got " ++ show nextChar
+  | otherwise = error $ "[Lexer] invalid token at position " ++ show nextPos ++ "got " ++ show nextChar
   where
     nextPos = position + 1
     nextChar = source !! nextPos
@@ -63,13 +65,13 @@ On base: position - 1, since the loop preemptively adds 1, when its over it will
 getNextParseIdentifier :: Lexer -> String -> LexerState
 getNextParseIdentifier (Lexer source position) buildingIdentifier
   | position >= length source =
-      (Lexer source position, Token.IDENTIFIER (read buildingIdentifier))
+      (Lexer source position, Token.IDENTIFIER buildingIdentifier)
   | isAlphaNumUnderscore currentChar =
       getNextParseIdentifier
         (Lexer source (position + 1))
         (buildingIdentifier ++ [currentChar])
   | otherwise =
-      (Lexer source (position - 1), Token.IDENTIFIER (read buildingIdentifier))
+      (Lexer source (position - 1), Token.IDENTIFIER buildingIdentifier)
   where
     isAlphaNumUnderscore c = isAlphaNum c || c == '_'
     currentChar = source !! position
@@ -77,12 +79,12 @@ getNextParseIdentifier (Lexer source position) buildingIdentifier
 getNextParseInt :: Lexer -> String -> LexerState
 getNextParseInt (Lexer source position) buildingInt
   | position >= length source =
-      (Lexer source position, Token.INT (read buildingInt))
+      (Lexer source position, Token.INT (read buildingInt :: Int))
   | isDigit currentChar =
       getNextParseInt
         (Lexer source (position + 1))
         (buildingInt ++ [currentChar])
   | otherwise =
-      (Lexer source (position - 1), Token.INT (read buildingInt))
+      (Lexer source (position - 1), Token.INT (read buildingInt :: Int))
   where
     currentChar = source !! position
