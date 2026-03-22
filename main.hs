@@ -1,7 +1,7 @@
 import Lexer (Lexer)
 import Parser (run)
 import PreProcess (preProcess)
-import Semantic (evaluate)
+import Semantic (execute)
 import SymbolTable (newSymbolTable)
 import System.Environment (getArgs)
 
@@ -13,4 +13,5 @@ main = do
     else do
       let filePath = head args
       compilerInput <- readFile filePath
-      print $ evaluate (run $ preProcess compilerInput) newSymbolTable
+      execute (run $ preProcess compilerInput) newSymbolTable
+      return ()

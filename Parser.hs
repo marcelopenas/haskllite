@@ -12,13 +12,37 @@ type Parser a = (Lexer, Token) -> ((Lexer, Token), a)
 
 run :: String -> Node
 run source
-  -- = error $ show $ getNext $ fst $ getNext $ fst $ getNext $ fst $ getNext invalidLexer
-  | finalToken == Token.EOF = node
+  -- | finalToken == Token.EOF = node
+  | finalToken == Token.EOF = error $ show node
   | otherwise = error $ "[Parser] Unexpected token at end of input: " ++ show finalToken
   where
     invalidLexer = Lexer source (-1)
     (initialLexer, next) = getNext invalidLexer
-    ((finalLex, finalToken), node) = parseExpression (initialLexer, next)
+    ((finalLex, finalToken), node) = parseProgram (initialLexer, next)
+
+parseProgram :: Parser Node
+parseProgram (lex, token) =
+  ((lastLex, lastToken), Semantic.Block block)
+  where
+    ((lastLex, lastToken), block) = parseProgramLoop (lex, token) []
+
+parseProgramLoop :: (Lexer, Token) -> [Node] -> ((Lexer, Token), [Node])
+parseProgramLoop (lex, token) statements = case token of
+  Token.EOF -> ((lex, token), statements)
+  -- _ -> ((nextLex, nextToken), node : statements)
+  _ -> parseExpressionLoop (nextLex, nextToken) newStatements
+  where
+    ((nextLex, nextToken), node) = parseStatement (lex, token)
+    newStatements = node : statements
+
+parseStatement :: Parser Node
+parseStatement (Lexer source position, token) = case token of
+  Token.PRINT -> ((newLex, newToken), Semantic.Print newNode)
+  _ -> error $ "[Parser] invalid statement: " ++ show token
+  where
+    lex = Lexer source position
+    ((newLex, newToken), newNode) = parseExpression (nextLex, nextToken)
+    (nextLex, nextToken) = getNext lex
 
 parseExpression :: Parser Node
 parseExpression (Lexer source position, next) = case nextToken of

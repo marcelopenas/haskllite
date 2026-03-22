@@ -66,14 +66,14 @@ getNextParseIdentifier :: Lexer -> String -> LexerState
 getNextParseIdentifier (Lexer source position) buildingIdentifier
   | position >= length source =
       (Lexer source position, Token.IDENTIFIER buildingIdentifier)
-  | isAlphaNumUnderscore currentChar =
+  | isIdentifier currentChar =
       getNextParseIdentifier
         (Lexer source (position + 1))
         (buildingIdentifier ++ [currentChar])
   | otherwise =
       (Lexer source (position - 1), Token.IDENTIFIER buildingIdentifier)
   where
-    isAlphaNumUnderscore c = isAlphaNum c || c == '_'
+    isIdentifier c = isAlphaNum c || c == '_' || c == '!'
     currentChar = source !! position
 
 getNextParseInt :: Lexer -> String -> LexerState
