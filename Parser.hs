@@ -8,11 +8,12 @@ import Lexer (Lexer (..), getNext)
 import Semantic
 import Token
 
-type Parser a = (Lexer, Token) -> ((Lexer, Token), a)
+type Scanner = (Lexer, Token)
+
+type Parser a = Scanner -> (Scanner, a)
 
 run :: String -> Node
 run source
-  -- = error $ show node
   | finalToken == Token.EOF = node
   | otherwise = error $ "[Parser] Unexpected token at end of input: " ++ show finalToken
   where
@@ -23,10 +24,10 @@ run source
 -- * Program
 
 parseProgram :: Parser Node
-parseProgram (lex, token) =
+parseProgram scanner =
   ((lastLex, lastToken), Semantic.Block nodes)
   where
-    ((lastLex, lastToken), nodes) = parseProgramLoop [] (lex, token)
+    ((lastLex, lastToken), nodes) = parseProgramLoop [] scanner
 
 parseProgramLoop :: [Node] -> Parser [Node]
 parseProgramLoop statements (lex, token) = case token of
@@ -37,12 +38,14 @@ parseProgramLoop statements (lex, token) = case token of
     nextStatements = node : statements
     ((newLex, newToken), newStatements) = parseProgramLoop nextStatements (nextLex, nextToken)
 
+-- * Statement
+
 parseStatement :: Parser Node
 parseStatement (Lexer source position, token) = case token of
   Token.END -> ((nextLex, nextToken), Semantic.NoOp)
   Token.IDENTIFIER name -> parseStatementAssign name (nextLex, nextToken)
   Token.PRINT -> (parseStatementEnd (newLex, newToken), Semantic.Print newNode)
-  _ -> error $ "[Parser] invalid statement: " ++ show token
+  _ -> error $ "[Parser] invalid statement: " ++ show token ++ " at: " ++ show position
   where
     lex = Lexer source position
     (nextLex, nextToken) = getNext lex
@@ -67,43 +70,44 @@ parseStatementEnd (Lexer source position, token) = case token of
 -- * Expression
 
 parseExpression :: Parser Node
-parseExpression (Lexer source position, next) = case nextToken of
+parseExpression (Lexer source position, token) = case token of
   Token.PLUS -> expected
   Token.MINUS -> expected
   _ -> parseExpressionLoop nextLex leftNode
   where
-    nextToken = next
-    (nextLex, leftNode) = parseTerm (lex, next)
-    expected = error $ "[Parser] Expected INT, got: " ++ show nextToken ++ ", at position: " ++ show position
+    (nextLex, leftNode) = parseTerm (lex, token)
+    expected = error $ "[Parser] Expected INT, got: " ++ show token ++ ", at position: " ++ show position
     lex = Lexer source position
 
 parseExpressionLoop :: (Lexer, Token) -> Node -> ((Lexer, Token), Node)
-parseExpressionLoop (Lexer source position, next) leftNode = case nextToken of
+parseExpressionLoop (Lexer source position, token) leftNode = case token of
   Token.PLUS -> parseExpressionLoop nextLex (Semantic.BinOp "+" leftNode rightNode)
   Token.MINUS -> parseExpressionLoop nextLex (Semantic.BinOp "-" leftNode rightNode)
-  _ -> ((lex, next), leftNode)
+  _ -> ((lex, token), leftNode)
   where
-    nextToken = next
     (nextLex, rightNode) = parseTerm (getNext lex)
     lex = Lexer source position
 
+-- * Term
+
 parseTerm :: Parser Node
-parseTerm (lex, next) = parseTermLoop nextLex leftNode
+parseTerm scanner = parseTermLoop nextLex leftNode
   where
-    (nextLex, leftNode) = parseFactor (lex, next)
+    (nextLex, leftNode) = parseFactor scanner
 
 parseTermLoop :: (Lexer, Token) -> Node -> ((Lexer, Token), Node)
-parseTermLoop (Lexer source position, next) leftNode = case nextToken of
+parseTermLoop (Lexer source position, token) leftNode = case token of
   Token.MULT -> parseTermLoop nextLex (Semantic.BinOp "*" leftNode rightNode)
   Token.DIV -> parseTermLoop nextLex (Semantic.BinOp "/" leftNode rightNode)
-  _ -> ((lex, next), leftNode)
+  _ -> ((lex, token), leftNode)
   where
-    nextToken = next
     (nextLex, rightNode) = parseFactor (getNext lex)
     lex = Lexer source position
 
+-- * Factor
+
 parseFactor :: Parser Node
-parseFactor (Lexer source position, next) = case nextToken of
+parseFactor (Lexer source position, token) = case token of
   Token.PLUS -> (nextLex, Semantic.UnOp "+" rightNode)
   Token.MINUS -> (nextLex, Semantic.UnOp "-" rightNode)
   Token.OPEN_PAR ->
@@ -112,9 +116,8 @@ parseFactor (Lexer source position, next) = case nextToken of
       else error $ "[Parser] Expected CLOSE_PAR at position: " ++ show positionAfterOpen
   (Token.INT val) -> (getNext lex, Semantic.IntNode val)
   (Token.IDENTIFIER name) -> (getNext lex, Semantic.Identifier name)
-  _ -> error $ "[Parser] Expected INT, got: " ++ show nextToken ++ ", at position: " ++ show position
+  _ -> error $ "[Parser] Expected INT, got: " ++ show token ++ ", at position: " ++ show position
   where
-    nextToken = next
     (nextLex, rightNode) = parseFactor (getNext lex)
     ((Lexer sourceAfterOpen positionAfterOpen, nextAfterOpen), exprNode) = parseExpression (getNext lex)
     lexAfterOpen = Lexer sourceAfterOpen positionAfterOpen

@@ -32,7 +32,6 @@ getNext (Lexer source position)
       lexWithIdentifier -> lexWithIdentifier
   | isDigit nextChar = getNextParseInt newLexPos emptyBuilder
   | isSpace nextChar = getNext newLexPos -- If space or \n continue
-  | nextCharEq '\n' = getNext newLexPos -- If space or \n continue
   | otherwise = error $ "[Lexer] invalid token at position " ++ show nextPos ++ "got " ++ show nextChar
   where
     nextPos = position + 1
