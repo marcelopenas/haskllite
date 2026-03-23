@@ -50,7 +50,7 @@ parseStatement (Lexer source position, token) = case token of
 
 parseStatementAssign :: String -> Parser Node
 parseStatementAssign name (Lexer source position, token) = case token of
-  Token.ASSIGN -> ((newLex, newToken), Semantic.Assignment name newNode)
+  Token.ASSIGN -> (parseStatementEnd (newLex, newToken), Semantic.Assignment name newNode)
   _ -> error $ "[Parser] expected assignment at: " ++ show position
   where
     lex = Lexer source position
