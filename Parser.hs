@@ -35,23 +35,34 @@ parseProgramLoop statements (lex, token) = case token of
   where
     ((nextLex, nextToken), node) = parseStatement (lex, token)
     nextStatements = node : statements
-    ((newLex, newToken), newStatements) = parseProgramLoop nextStatements (parseStatementEnd (nextLex, nextToken) )
-
-parseStatementEnd :: (Lexer, Token) -> (Lexer, Token)
-parseStatementEnd (lex, token) = case token of 
-  Token.END -> getNext lex
-  _ -> error "[Parser] no END in statement"
+    ((newLex, newToken), newStatements) = parseProgramLoop nextStatements (nextLex, nextToken)
 
 parseStatement :: Parser Node
 parseStatement (Lexer source position, token) = case token of
-  Token.ASSIGN -> ((newLex, newToken), Semantic.Assignment "name" newNode)
-  Token.IDENTIFIER name -> ((nextLex, nextToken), Semantic.NoOp) -- Pass ((newLex, newToken), Semantic.Identifier name)
-  Token.PRINT -> ((newLex, newToken), Semantic.Print newNode)
+  Token.END -> ((nextLex, nextToken), Semantic.NoOp)
+  Token.IDENTIFIER name -> parseStatementAssign name (nextLex, nextToken)
+  Token.PRINT -> (parseStatementEnd (newLex, newToken), Semantic.Print newNode)
   _ -> error $ "[Parser] invalid statement: " ++ show token
   where
     lex = Lexer source position
     (nextLex, nextToken) = getNext lex
     ((newLex, newToken), newNode) = parseExpression (nextLex, nextToken)
+
+parseStatementAssign :: String -> Parser Node
+parseStatementAssign name (Lexer source position, token) = case token of
+  Token.ASSIGN -> ((newLex, newToken), Semantic.Assignment name newNode)
+  _ -> error $ "[Parser] expected assignment at: " ++ show position
+  where
+    lex = Lexer source position
+    (nextLex, nextToken) = getNext lex
+    ((newLex, newToken), newNode) = parseExpression (nextLex, nextToken)
+
+parseStatementEnd :: (Lexer, Token) -> (Lexer, Token)
+parseStatementEnd (Lexer source position, token) = case token of
+  Token.END -> getNext lex
+  _ -> error $ "[Parser] no END in statement at:" ++ show position
+  where
+    lex = Lexer source position
 
 -- * Expression
 
@@ -100,6 +111,7 @@ parseFactor (Lexer source position, next) = case nextToken of
       then (getNext lexAfterOpen, exprNode) -- Consume CLOSE_PAR
       else error $ "[Parser] Expected CLOSE_PAR at position: " ++ show positionAfterOpen
   (Token.INT val) -> (getNext lex, Semantic.IntNode val)
+  (Token.IDENTIFIER name) -> (getNext lex, Semantic.Identifier name)
   _ -> error $ "[Parser] Expected INT, got: " ++ show nextToken ++ ", at position: " ++ show position
   where
     nextToken = next
