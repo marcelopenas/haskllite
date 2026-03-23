@@ -20,29 +20,40 @@ run source
     (initialLexer, next) = getNext invalidLexer
     ((finalLex, finalToken), node) = parseProgram (initialLexer, next)
 
+-- * Program
+
 parseProgram :: Parser Node
 parseProgram (lex, token) =
   ((lastLex, lastToken), Semantic.Block nodes)
   where
-    ((lastLex, lastToken), nodes) = parseProgramLoop (lex, token) []
+    ((lastLex, lastToken), nodes) = parseProgramLoop [] (lex, token)
 
-parseProgramLoop :: (Lexer, Token) -> [Node] -> ((Lexer, Token), [Node])
-parseProgramLoop (lex, token) statements = case token of
+parseProgramLoop :: [Node] -> Parser [Node]
+parseProgramLoop statements (lex, token) = case token of
   Token.EOF -> ((lex, token), statements)
   _ -> ((newLex, newToken), newStatements)
   where
     ((nextLex, nextToken), node) = parseStatement (lex, token)
     nextStatements = node : statements
-    ((newLex, newToken), newStatements) = parseProgramLoop (nextLex, nextToken) nextStatements
+    ((newLex, newToken), newStatements) = parseProgramLoop nextStatements (parseStatementEnd (nextLex, nextToken) )
+
+parseStatementEnd :: (Lexer, Token) -> (Lexer, Token)
+parseStatementEnd (lex, token) = case token of 
+  Token.END -> getNext lex
+  _ -> error "[Parser] no END in statement"
 
 parseStatement :: Parser Node
 parseStatement (Lexer source position, token) = case token of
+  Token.ASSIGN -> ((newLex, newToken), Semantic.Assignment "name" newNode)
+  Token.IDENTIFIER name -> ((nextLex, nextToken), Semantic.NoOp) -- Pass ((newLex, newToken), Semantic.Identifier name)
   Token.PRINT -> ((newLex, newToken), Semantic.Print newNode)
   _ -> error $ "[Parser] invalid statement: " ++ show token
   where
     lex = Lexer source position
-    ((newLex, newToken), newNode) = parseExpression (nextLex, nextToken)
     (nextLex, nextToken) = getNext lex
+    ((newLex, newToken), newNode) = parseExpression (nextLex, nextToken)
+
+-- * Expression
 
 parseExpression :: Parser Node
 parseExpression (Lexer source position, next) = case nextToken of
