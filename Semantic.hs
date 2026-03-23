@@ -41,5 +41,5 @@ execute (Assignment name expr) st = do
   let !st' = setSymbol (name, value) st
   return st'
 execute (Block nodes) st = do
-  foldM (flip execute) st nodes
+  foldM (flip execute) st (reverse nodes) -- Nodes will be right to left, thus reverse nodes
 execute NoOp st = return st
