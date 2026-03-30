@@ -59,9 +59,17 @@ parseUnary lex
   | nextKind == Token.MINUS =
       let (after, node) = parseUnary (getNext lex)
        in (after, Semantic.UnOp "-" [node])
-  | otherwise = parseFactorial lex
+  | otherwise = parsePower lex
   where
     nextKind = next lex
+
+parsePower :: Lexer -> (Lexer, Node)
+parsePower lex =
+  let (afterLeft, leftNode) = parseFactorial lex
+  in if next afterLeft == Token.POWER -- Assuming Token.POWER is '^'
+     then let (afterRight, rightNode) = parsePower (getNext afterLeft)
+          in (afterRight, Semantic.BinOp "**" [leftNode, rightNode])
+     else (afterLeft, leftNode)
 
 parseFactorial :: Lexer -> (Lexer, Node)
 parseFactorial lex =

@@ -10,7 +10,7 @@ data Token
   | XOR
   | MULT
   | DIV
-  -- | POWER
+  | POWER
   | FACT
   | OPEN_PAR
   | CLOSE_PAR

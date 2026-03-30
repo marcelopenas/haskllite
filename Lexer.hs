@@ -38,7 +38,7 @@ getNext (Lexer source position next)
 
 getNextParseStar :: Lexer -> Lexer
 getNextParseStar (Lexer source position next)
-  -- | nextChar == '*' = newLex Token.POWER
+  | nextChar == '*' = newLex Token.POWER
   | otherwise = currentLex Token.MULT
   where
     nextPos = position + 1
