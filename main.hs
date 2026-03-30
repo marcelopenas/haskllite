@@ -1,4 +1,3 @@
-import Lexer (Lexer)
 import Parser (run)
 import PreProcess (preProcess)
 import Semantic (execute)
@@ -14,5 +13,4 @@ main = do
       let filePath = head args
       compilerInput <- readFile filePath
       execute (run $ preProcess compilerInput) newSymbolTable
-      -- print $ preProcess compilerInput
       return ()
