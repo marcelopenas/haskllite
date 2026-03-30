@@ -81,14 +81,19 @@ getConstantOccurrence constants source constIndex = (constant : constants, modif
     getConstName :: Int -> String -> String -> (String, Int)
     getConstName currentIndex source buildingString = case currentChar of
       ' ' -> (buildingString, currentIndex)
-      _ -> getConstName (currentIndex+1) source (currentChar : buildingString)
+      _ -> getConstName (currentIndex + 1) source (currentChar : buildingString)
       where
         currentChar = source !! currentIndex
     getConstValue :: Int -> String -> String -> (String, Int)
     getConstValue currentIndex source buildingString = case currentChar of
       ';' -> (buildingString, currentIndex)
-      _ -> getConstValue (currentIndex+1) source (currentChar : buildingString)
+      _ -> getConstValue (currentIndex + 1) source (currentChar : buildingString)
       where
         currentChar = source !! currentIndex
 
-    modifiedSource = removeBetween constIndex (constValueEndIndex+1) source 
+    modifiedSource = removeBetween constIndex (constValueEndIndex + 1) source
+
+replaceConstants :: [Constant] -> String -> String
+replaceConstants (constant : constants) source = replaceConstants constants replacedSource
+  where
+    replacedSource = source
