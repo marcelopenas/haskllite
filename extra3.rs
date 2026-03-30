@@ -7,3 +7,4 @@ println!(N);
 println!(XV);
 println!(N);
 ;;
+const ERR;

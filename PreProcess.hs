@@ -84,6 +84,7 @@ getConstantOccurrence constants source constIndex = (constant : constants, modif
 
     getConstName :: Int -> String -> String -> (String, Int)
     getConstName currentIndex source buildingString = case currentChar of
+      ';' -> error "[Lexer] Incomplete define statement"
       ' ' -> (reverse buildingString, currentIndex)
       _ -> getConstName (currentIndex + 1) source (currentChar : buildingString)
       where
