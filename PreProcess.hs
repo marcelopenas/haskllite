@@ -4,6 +4,7 @@ module PreProcess
 where
 
 import Data.List (findIndex, isPrefixOf, stripPrefix, tails)
+import Data.Text (Text, pack, replace, unpack)
 
 preProcess :: String -> String
 preProcess source = substituteConstants $ removeComment 0 source
@@ -50,23 +51,26 @@ removeComment pos source
 
 type Name = String
 
--- TODO get from symbol table content
-type Value = Int
+type Value = String
 
 type Constant = (Name, Value)
 
 findIndexString :: String -> String -> Maybe Int
 findIndexString search str = findIndex (isPrefixOf search) (tails str)
 
+-- Find and remove
+
 substituteConstants :: String -> String
-substituteConstants = substituteConstantsLoop newConstantTable
+substituteConstants source = replacedSource
   where
+    (constants, modifiedSource) = substituteConstantsLoop newConstantTable source
+    replacedSource = replaceConstants constants modifiedSource
     newConstantTable = []
 
-substituteConstantsLoop :: [Constant] -> String -> String
+substituteConstantsLoop :: [Constant] -> String -> ([Constant], String)
 substituteConstantsLoop constants source = case constIndex of
   Just constIndex -> uncurry substituteConstantsLoop $ getConstantOccurrence constants source constIndex
-  Nothing -> source
+  Nothing -> (constants, source)
   where
     constIndex = findIndexString "const " source
 
@@ -76,24 +80,36 @@ getConstantOccurrence constants source constIndex = (constant : constants, modif
     identifierIndex = constIndex + 6 -- Accounts for 'const '
     (constName, constValueIndex) = getConstName identifierIndex source ""
     (constValue, constValueEndIndex) = getConstValue (constValueIndex + 3) source "" -- Accounts for 'const `name` = '
-    constant = (constName, read constValue)
+    constant = (constName, constValue)
 
     getConstName :: Int -> String -> String -> (String, Int)
     getConstName currentIndex source buildingString = case currentChar of
-      ' ' -> (buildingString, currentIndex)
+      ' ' -> (reverse buildingString, currentIndex)
       _ -> getConstName (currentIndex + 1) source (currentChar : buildingString)
       where
         currentChar = source !! currentIndex
     getConstValue :: Int -> String -> String -> (String, Int)
     getConstValue currentIndex source buildingString = case currentChar of
-      ';' -> (buildingString, currentIndex)
+      ';' -> (reverse buildingString, currentIndex)
       _ -> getConstValue (currentIndex + 1) source (currentChar : buildingString)
       where
         currentChar = source !! currentIndex
 
     modifiedSource = removeBetween constIndex (constValueEndIndex + 1) source
 
+-- Replace
+
 replaceConstants :: [Constant] -> String -> String
+replaceConstants [] source = source
 replaceConstants (constant : constants) source = replaceConstants constants replacedSource
   where
-    replacedSource = source
+    replacedSource = replaceConstantsLoop constant source
+
+replaceConstantsLoop :: Constant -> String -> String
+replaceConstantsLoop constant source = replacedSource
+  where
+    (constName, constValue) = constant
+    replacedSource = replaceString constName constValue source
+
+replaceString :: String -> String -> String -> String
+replaceString old new source = unpack $ replace (pack old) (pack new) (pack source)

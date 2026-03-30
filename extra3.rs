@@ -1,4 +1,9 @@
 ;
 const N = 1;
-const X = 42;
 println!(N);
+const XV = 42;
+println!(N);
+;;;
+println!(XV);
+println!(N);
+;;
