@@ -13,5 +13,6 @@ main = do
     else do
       let filePath = head args
       compilerInput <- readFile filePath
-      execute (run $ preProcess compilerInput) newSymbolTable
+      -- execute (run $ preProcess compilerInput) newSymbolTable
+      print $ preProcess compilerInput
       return ()
