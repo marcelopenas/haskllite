@@ -12,7 +12,7 @@ data Node
   | BinOp String Node Node
   | Identifier String
   | Print Node
-  | Assignment String Node
+  | Assignment String Node Bool -- Name Expression Immutable
   | Block [Node]
   | NoOp
   deriving (Show)
@@ -30,15 +30,17 @@ evaluate (BinOp "/" a b) st = evaluate a st `div` evaluate b st
 evaluate (BinOp "**" a b) st
   | evaluate b st < 0 = error "[Semantic] Negative exponent not supported"
   | otherwise = evaluate a st ^ evaluate b st
-evaluate (Identifier name) st = getSymbol name st
+evaluate (Identifier name) st = getSymbol name st -- Return content
 
 execute :: Node -> SymbolTable -> IO SymbolTable
 execute (Print node) st = do
   print (evaluate node st)
   return st
-execute (Assignment name expr) st = do
+execute (Assignment name expr immutable) st = do
+  -- Get value
   let !value = evaluate expr st
-  let !st' = setSymbol (name, value) st
+  -- Assign
+  let !st' = setSymbol (name, (value, immutable)) st
   return st'
 execute (Block nodes) st = do
   foldM (flip execute) st (reverse nodes) -- Nodes will be right to left, thus reverse nodes

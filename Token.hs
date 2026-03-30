@@ -3,6 +3,10 @@ module Token
   )
 where
 
+type Name = String
+
+type Immutable = Bool
+
 data Token
   = INT Int
   | PLUS
@@ -16,6 +20,7 @@ data Token
   | ASSIGN
   | END
   | PRINT
-  | IDENTIFIER String
+  | LET
+  | IDENTIFIER Name
   | EOF
   deriving (Show, Eq)

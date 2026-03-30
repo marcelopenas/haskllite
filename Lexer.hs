@@ -29,6 +29,7 @@ getNext (Lexer source position)
   | nextCharEq ';' = newLexerState Token.END
   | isAlpha nextChar = case getNextParseIdentifier newLexPos emptyBuilder of
       (Lexer _ newPos, Token.IDENTIFIER "println!") -> (newLex newPos, Token.PRINT)
+      (Lexer _ newPos, Token.IDENTIFIER "let") -> (newLex newPos, Token.LET)
       lexWithIdentifier -> lexWithIdentifier
   | isDigit nextChar = getNextParseInt newLexPos emptyBuilder
   | isSpace nextChar = getNext newLexPos -- If space or \n continue

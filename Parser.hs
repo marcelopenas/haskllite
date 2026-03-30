@@ -43,7 +43,8 @@ parseProgramLoop statements (lex, token) = case token of
 parseStatement :: Parser Node
 parseStatement (Lexer source position, token) = case token of
   Token.END -> ((nextLex, nextToken), Semantic.NoOp)
-  Token.IDENTIFIER name -> parseStatementAssign name (nextLex, nextToken)
+  Token.LET -> parseStatementLet (nextLex, nextToken)
+  Token.IDENTIFIER name -> parseStatementAssign name False (nextLex, nextToken)
   Token.PRINT -> (parseStatementEnd (newLex, newToken), Semantic.Print newNode)
   _ -> error $ "[Parser] invalid statement: " ++ show token ++ " at: " ++ show position
   where
@@ -51,10 +52,19 @@ parseStatement (Lexer source position, token) = case token of
     (nextLex, nextToken) = getNext lex
     ((newLex, newToken), newNode) = parseExpression (nextLex, nextToken)
 
-parseStatementAssign :: String -> Parser Node
-parseStatementAssign name (Lexer source position, token) = case token of
-  Token.ASSIGN -> (parseStatementEnd (newLex, newToken), Semantic.Assignment name newNode)
-  _ -> error $ "[Parser] expected assignment at: " ++ show position
+parseStatementLet :: Parser Node
+parseStatementLet (Lexer source position, token) = case token of
+  Token.IDENTIFIER name -> parseStatementAssign name True (nextLex, nextToken)
+  _ -> error $ "[Parser] expected identifier, got: " ++ show token ++ " at: " ++ show position
+  where
+    lex = Lexer source position
+    (nextLex, nextToken) = getNext lex
+
+
+parseStatementAssign :: String -> Bool -> Parser Node
+parseStatementAssign name immutable (Lexer source position, token) = case token of
+  Token.ASSIGN -> (parseStatementEnd (newLex, newToken), Semantic.Assignment name newNode immutable)
+  _ -> error $ "[Parser] expected assignment at: " ++ show position ++ ", got: " ++ show token
   where
     lex = Lexer source position
     (nextLex, nextToken) = getNext lex
