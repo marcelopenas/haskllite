@@ -63,6 +63,10 @@ evaluate :: Node -> Int
 evaluate (IntNode n) = n
 evaluate (UnOp "+" [a]) = evaluate a
 evaluate (UnOp "-" [a]) = -evaluate a
+evaluate (UnOp "!" [a])
+  | evaluate a < 0 = error "[Semantic] Negative factorial not supported"
+  | evaluate a == 0 = 1
+  | otherwise = product [1 .. (evaluate a)]
 evaluate (BinOp "+" [a, b]) = evaluate a + evaluate b
 evaluate (BinOp "-" [a, b]) = evaluate a - evaluate b
 evaluate (BinOp "*" [a, b]) = evaluate a * evaluate b

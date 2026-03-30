@@ -23,6 +23,7 @@ getNext (Lexer source position next)
   | nextChar == '-' = newLex Token.MINUS
   | nextChar == '^' = newLex Token.XOR
   | nextChar == '*' = getNextParseStar (newLex next)
+  | nextChar == '!' = newLex Token.FACT
   | nextChar == '/' = newLex Token.DIV
   | nextChar == '(' = newLex Token.OPEN_PAR
   | nextChar == ')' = newLex Token.CLOSE_PAR

@@ -11,6 +11,7 @@ data Token
   | MULT
   | DIV
   -- | POWER
+  | FACT
   | OPEN_PAR
   | CLOSE_PAR
   | EOF
