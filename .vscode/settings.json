@@ -4,6 +4,7 @@
         "EBNF",
         "Haskllite",
         "MULT",
+        "scanln",
         "uncurry"
     ]
 }

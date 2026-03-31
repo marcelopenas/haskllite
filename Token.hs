@@ -15,8 +15,20 @@ data Token
   | MULT
   | DIV
   | POWER
+  | AND
+  | OR
+  | NOT
+  | EQUAL
+  | GREATER
+  | LESSER
   | OPEN_PAR
   | CLOSE_PAR
+  | OPEN_BRA
+  | CLOSE_BRA
+  | IF
+  | WHILE
+  | ELSE
+  | SCAN
   | ASSIGN
   | END
   | PRINT

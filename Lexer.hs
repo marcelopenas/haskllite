@@ -25,12 +25,22 @@ getNext (Lexer source position)
   | nextCharEq '/' = newLexerState Token.DIV
   | nextCharEq '(' = newLexerState Token.OPEN_PAR
   | nextCharEq ')' = newLexerState Token.CLOSE_PAR
-  | nextCharEq '=' = newLexerState Token.ASSIGN
+  | nextCharEq '{' = newLexerState Token.OPEN_BRA
+  | nextCharEq '}' = newLexerState Token.CLOSE_BRA
+  | nextCharEq '=' = getNextParseEqual newLexPos
+  | nextCharEq '>' = newLexerState Token.GREATER
+  | nextCharEq '<' = newLexerState Token.LESSER
   | nextCharEq ';' = newLexerState Token.END
   | isAlpha nextChar = case getNextParseIdentifier newLexPos emptyBuilder of
       (Lexer _ newPos, Token.IDENTIFIER "println!") -> (newLex newPos, Token.PRINT)
       (Lexer _ newPos, Token.IDENTIFIER "let") -> (newLex newPos, Token.LET)
+      (Lexer _ newPos, Token.IDENTIFIER "if") -> (newLex newPos, Token.WHILE)
+      (Lexer _ newPos, Token.IDENTIFIER "while") -> (newLex newPos, Token.LET)
+      (Lexer _ newPos, Token.IDENTIFIER "else") -> (newLex newPos, Token.ELSE)
+      (Lexer _ newPos, Token.IDENTIFIER "scanln!") -> (newLex newPos, Token.SCAN)
       lexWithIdentifier -> lexWithIdentifier
+  | nextCharEq '&' = getNextParseAnd newLexPos
+  | nextCharEq '|' = getNextParseOr newLexPos
   | isDigit nextChar = getNextParseInt newLexPos emptyBuilder
   | isSpace nextChar = getNext newLexPos -- If space or \n continue
   | otherwise = error $ "[Lexer] invalid token at position " ++ show nextPos ++ "got " ++ show nextChar
@@ -52,6 +62,33 @@ getNextParseStar :: Lexer -> LexerState
 getNextParseStar (Lexer source position) = case nextChar of
   '*' -> (newLex nextPos, Token.POWER)
   _ -> (newLex position, Token.MULT)
+  where
+    nextPos = position + 1
+    nextChar = source !! nextPos
+    newLex = Lexer source
+
+getNextParseEqual :: Lexer -> LexerState
+getNextParseEqual (Lexer source position) = case nextChar of
+  '=' -> (newLex nextPos, Token.EQUAL)
+  _ -> (newLex position, Token.ASSIGN)
+  where
+    nextPos = position + 1
+    nextChar = source !! nextPos
+    newLex = Lexer source
+
+getNextParseAnd :: Lexer -> LexerState
+getNextParseAnd (Lexer source position) = case nextChar of
+  '&' -> (newLex nextPos, Token.AND)
+  _ -> error $ "[Lexer] invalid token at position " ++ show nextPos ++ "got " ++ show nextChar
+  where
+    nextPos = position + 1
+    nextChar = source !! nextPos
+    newLex = Lexer source
+
+getNextParseOr :: Lexer -> LexerState
+getNextParseOr (Lexer source position) = case nextChar of
+  '|' -> (newLex nextPos, Token.OR)
+  _ -> error $ "[Lexer] invalid token at position " ++ show nextPos ++ "got " ++ show nextChar
   where
     nextPos = position + 1
     nextChar = source !! nextPos
