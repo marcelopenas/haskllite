@@ -1,4 +1,4 @@
-import Parser (run)
+import Parser.Run (run)
 import PreProcess (preProcess)
 import Semantic (execute)
 import SymbolTable (newSymbolTable)
