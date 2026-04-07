@@ -17,15 +17,12 @@ removeBetween startIdx endIdx str =
 
 removeComments :: String -> String
 removeComments [] = []
--- Match the start of a comment
 removeComments ('/' : '/' : xs) = removeComments (dropToNewline xs)
--- Keep the character and move to the next
 removeComments (x : xs) = x : removeComments xs
 
--- Helper to skip everything until a newline
 dropToNewline :: String -> String
 dropToNewline [] = []
-dropToNewline ('\n' : xs) = xs -- Keep the newline or skip it? Usually keep it.
+dropToNewline ('\n' : xs) = xs -- Keep the newline
 dropToNewline (_ : xs) = dropToNewline xs
 
 -- * Constants
