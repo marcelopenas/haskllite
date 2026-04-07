@@ -42,6 +42,7 @@ getNext (Lexer source position)
       lexWithIdentifier -> lexWithIdentifier
   | nextCharEq '&' = getNextParseAnd newLexPos
   | nextCharEq '|' = getNextParseOr newLexPos
+  | nextCharEq '!' = newLexerState Token.NOT
   | isDigit nextChar = getNextParseInt newLexPos emptyBuilder
   | isSpace nextChar = getNext newLexPos -- If space or \n continue
   | otherwise = error $ "[Lexer] invalid token at position " ++ show nextPos ++ "got " ++ show nextChar

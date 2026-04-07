@@ -10,6 +10,7 @@ parseFactor :: Parser Node
 parseFactor (Lexer source position, token) = case token of
   Token.PLUS -> (nextLex, Semantic.UnOp "+" rightNode)
   Token.MINUS -> (nextLex, Semantic.UnOp "-" rightNode)
+  Token.NOT -> (nextLex, Semantic.UnOp "!" rightNode)
   Token.SCAN -> (parseFactorScan $ getNext lex, Semantic.Scan)
   Token.OPEN_PAR ->
     if nextAfterOpen == Token.CLOSE_PAR

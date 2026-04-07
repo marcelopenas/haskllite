@@ -7,10 +7,7 @@ import Data.List (findIndex, isPrefixOf, stripPrefix, tails)
 import Data.Text (Text, pack, replace, unpack)
 
 preProcess :: String -> String
-preProcess source = substituteConstants $ removeComment 0 source
-
-substring :: Int -> Int -> String -> String
-substring i j s = take (j - i) (drop i s)
+preProcess source = substituteConstants $ removeComments source
 
 removeBetween :: Int -> Int -> String -> String
 removeBetween startIdx endIdx str =
@@ -18,34 +15,18 @@ removeBetween startIdx endIdx str =
 
 -- * Comments
 
-removeComment :: Int -> String -> String
-removeComment pos source
-  | pos >= sourceLen = source
-  | otherwise = removeComment endPos (removeBetween startPos endPos source)
-  where
-    findStart :: Int -> String -> Int
-    findStart pos' source
-      | pos' >= sourceLen = pos'
-      | otherwise = case (currentChar, nextChar) of
-          ('/', '/') -> pos'
-          _ -> findStart (pos' + 1) source
-      where
-        currentChar = source !! pos'
-        nextChar = source !! (pos' + 1)
+removeComments :: String -> String
+removeComments [] = []
+-- Match the start of a comment
+removeComments ('/' : '/' : xs) = removeComments (dropToNewline xs)
+-- Keep the character and move to the next
+removeComments (x : xs) = x : removeComments xs
 
-    findEnd :: Int -> String -> Int
-    findEnd pos' source
-      | pos' >= sourceLen = pos'
-      | otherwise = case currentChar of
-          '\n' -> pos' + 1
-          _ -> findEnd (pos' + 1) source
-      where
-        currentChar = source !! pos'
-
-    startPos = findStart pos source
-    endPos = findEnd startPos source
-
-    sourceLen = length source
+-- Helper to skip everything until a newline
+dropToNewline :: String -> String
+dropToNewline [] = []
+dropToNewline ('\n' : xs) = xs -- Keep the newline or skip it? Usually keep it.
+dropToNewline (_ : xs) = dropToNewline xs
 
 -- * Constants
 
