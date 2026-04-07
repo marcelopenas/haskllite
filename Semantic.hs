@@ -60,7 +60,12 @@ execute (Assignment name expr immutable) st = do
 execute (Block nodes) st = do
   foldM (flip execute) st (reverse nodes) -- Nodes will be right to left, thus reverse nodes
 execute (If evalNode ifNode elseNode) st = do
-  if evaluate evalNode st == 1 then execute ifNode st else execute elseNode st
+  let !value = evaluate evalNode st
+  if value == 1
+    then do
+      execute ifNode st
+    else do
+      execute elseNode st
 execute (While evalNode node) st = do
   let !value = evaluate evalNode st
   if value == 1

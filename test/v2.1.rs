@@ -7,5 +7,6 @@ if (n < 2) {
     while (i < n || i == n) {
         f = f * i;
         i = i + 1;
+        println!(i);
     }
 }
