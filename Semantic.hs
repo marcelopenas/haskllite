@@ -62,5 +62,11 @@ execute (Block nodes) st = do
 execute (If evalNode ifNode elseNode) st = do
   if evaluate evalNode st == 1 then execute ifNode st else execute elseNode st
 execute (While evalNode node) st = do
-  if evaluate evalNode st == 1 then execute (While evalNode node) st else return st
+  let !value = evaluate evalNode st
+  if value == 1
+    then do
+      !nextSt <- execute node st
+      execute (While evalNode node) nextSt
+    else
+      return st
 execute NoOp st = return st

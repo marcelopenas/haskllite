@@ -3,8 +3,8 @@ module Parser.Statement (parseStatement) where
 import Lexer (Lexer (..), getNext)
 import Parser.BoolExpression (parseBoolExpression)
 import Parser.Parser (Parser)
-import Semantic (Node (Assignment, NoOp, Print))
-import Token (Token (ASSIGN, END, IDENTIFIER, LET, PRINT))
+import Semantic (Node (Assignment, NoOp, Print, While))
+import Token (Token (ASSIGN, END, IDENTIFIER, LET, PRINT, WHILE))
 import {-# SOURCE #-} Parser.Block (parseBlock)
 
 parseStatement :: Parser Node
@@ -12,13 +12,14 @@ parseStatement (Lexer source position, token) = case token of
   Token.END -> ((nextLex, nextToken), Semantic.NoOp)
   Token.LET -> parseStatementLet (nextLex, nextToken)
   Token.IDENTIFIER name -> parseStatementAssign name False (nextLex, nextToken)
-  Token.PRINT -> (parseStatementEnd (newLex, newToken), Semantic.Print newNode)
+  Token.PRINT -> (parseStatementEnd (newLex, newToken), Semantic.Print newNode) -- TODO check for ()
+  Token.WHILE -> ((afterLex, afterToken), Semantic.While newNode afterNode)
   _ -> parseBlock (lex, token)
-  -- _ -> error $ "[Parser] invalid statement: " ++ show token ++ " at: " ++ show position
   where
     lex = Lexer source position
     (nextLex, nextToken) = getNext lex
     ((newLex, newToken), newNode) = parseBoolExpression (nextLex, nextToken)
+    ((afterLex, afterToken), afterNode) = parseStatement (newLex, newToken)    
 
 parseStatementLet :: Parser Node
 parseStatementLet (Lexer source position, token) = case token of

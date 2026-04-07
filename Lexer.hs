@@ -35,8 +35,8 @@ getNext (Lexer source position)
   | isAlpha nextChar = case getNextParseIdentifier newLexPos emptyBuilder of
       (Lexer _ newPos, Token.IDENTIFIER "println!") -> (newLex newPos, Token.PRINT)
       (Lexer _ newPos, Token.IDENTIFIER "let") -> (newLex newPos, Token.LET)
-      (Lexer _ newPos, Token.IDENTIFIER "if") -> (newLex newPos, Token.WHILE)
-      (Lexer _ newPos, Token.IDENTIFIER "while") -> (newLex newPos, Token.LET)
+      (Lexer _ newPos, Token.IDENTIFIER "if") -> (newLex newPos, Token.IF)
+      (Lexer _ newPos, Token.IDENTIFIER "while") -> (newLex newPos, Token.WHILE)
       (Lexer _ newPos, Token.IDENTIFIER "else") -> (newLex newPos, Token.ELSE)
       (Lexer _ newPos, Token.IDENTIFIER "scanln!") -> (newLex newPos, Token.SCAN)
       lexWithIdentifier -> lexWithIdentifier
