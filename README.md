@@ -15,13 +15,19 @@
 ```ebnf
 PROGRAM = { STATEMENT };
 
-STATEMENT = ((IDENTIFIER, "=", EXPRESSION) | (PRINT, "(", EXPRESSION, ")") | ε), EOL;
+STATEMENT = ((IF, "(", BOOLEXPRESSION, ")", STATEMENT, ("ELSE", STATEMENT) | ε) | (WHILE, "(", BOOLEXPRESSION, ")", STATEMENT) | (IDENTIFIER, "=", BOOLEXPRESSION) | (PRINT, "(", BOOLEXPRESSION, ")") | ε), EOL;
 
-EXPRESSION = TERM, { ( "+" | "-" ) , TERM };
+BOOLEXPRESSION = BOOLTERM, { "||", BOOLTERM };
+
+BOOLTERM = RELEXPRESSION, { "&&", RELEXPRESSION };
+
+RELEXPRESSION = EXPRESSION, ("==" | "<" | ">"), EXPRESSION;
+
+EXPRESSION = TERM, { ("+" | "-"), TERM };
 
 TERM = FACTOR, { ( "*" | "/" ), FACTOR };
 
-FACTOR = ("+" | "-"), FACTOR | "(", EXPRESSION, ")" | NUMBER;
+FACTOR = ("+" | "-"), FACTOR | "(", BOOLEXPRESSION, ")" | NUMBER | READ, "(", ")";
 
 NUMBER = DIGIT, { DIGIT };
 
@@ -30,6 +36,7 @@ DIGIT = 0 | 1 | ... | 9;
 IDENTIFIER = LETTER, {LETTER | DIGIT | "_"};
 
 LETTER = a | b | ... | z | A | B | ... | Z;
+
 ```
 
 ## Tagging
