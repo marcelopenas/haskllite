@@ -1,12 +1,8 @@
-module Lexer
-  ( Lexer (..),
-    LexerState,
-    getNext,
-  )
-where
+module Lexer (Lexer (..), LexerState, getNext) where
 
+import CompilerError (compilerLexerError)
 import Data.Char (isAlpha, isAlphaNum, isDigit, isSpace)
-import Token
+import Token (Token (..))
 
 type Source = String
 
@@ -16,115 +12,77 @@ data Lexer = Lexer Source Position deriving (Show)
 
 type LexerState = (Lexer, Token)
 
+isIdentifier :: Char -> Bool
+isIdentifier c = isAlphaNum c || c == '_' || c == '!'
+
+insInt :: Char -> Bool
+insInt = isDigit
+
 getNext :: Lexer -> (Lexer, Token)
 getNext (Lexer source position)
-  | length source <= nextPos = newLexerState Token.EOF
-  | nextCharEq '+' = newLexerState Token.PLUS
-  | nextCharEq '-' = newLexerState Token.MINUS
-  | nextCharEq '^' = newLexerState Token.XOR
-  | nextCharEq '*' = getNextParseStar newLexPos
-  | nextCharEq '/' = newLexerState Token.DIV
-  | nextCharEq '(' = newLexerState Token.OPEN_PAR
-  | nextCharEq ')' = newLexerState Token.CLOSE_PAR
-  | nextCharEq '{' = newLexerState Token.OPEN_BRA
-  | nextCharEq '}' = newLexerState Token.CLOSE_BRA
-  | nextCharEq '=' = getNextParseEqual newLexPos
-  | nextCharEq '>' = newLexerState Token.GREATER
-  | nextCharEq '<' = newLexerState Token.LESSER
-  | nextCharEq ';' = newLexerState Token.END
-  | isAlpha nextChar = case getNextParseIdentifier newLexPos emptyBuilder of
-      (Lexer _ newPos, Token.IDENTIFIER "println!") -> (newLex newPos, Token.PRINT)
-      (Lexer _ newPos, Token.IDENTIFIER "let") -> (newLex newPos, Token.LET)
-      (Lexer _ newPos, Token.IDENTIFIER "if") -> (newLex newPos, Token.IF)
-      (Lexer _ newPos, Token.IDENTIFIER "while") -> (newLex newPos, Token.WHILE)
-      (Lexer _ newPos, Token.IDENTIFIER "else") -> (newLex newPos, Token.ELSE)
-      (Lexer _ newPos, Token.IDENTIFIER "scanln!") -> (newLex newPos, Token.SCAN)
-      lexWithIdentifier -> lexWithIdentifier
-  | nextCharEq '&' = getNextParseAnd newLexPos
-  | nextCharEq '|' = getNextParseOr newLexPos
-  | nextCharEq '!' = newLexerState Token.NOT
-  | isDigit nextChar = getNextParseInt newLexPos emptyBuilder
-  | isSpace nextChar = getNext newLexPos -- If space or \n continue
-  | otherwise = error $ "[Lexer] invalid token at position " ++ show nextPos ++ "got " ++ show nextChar
+  | length source <= nextPos = (nextLex, EOF)
+  | isSpace nextChar = getNext nextLex -- If space or \n continue
+  | isAlpha nextChar =
+      let lexWithIdentifier = getNextParse nextLex (IDENTIFIER emptyBuilder) isIdentifier emptyBuilder
+       in case lexWithIdentifier of
+            (newLex, IDENTIFIER "println!") -> (newLex, PRINT)
+            (newLex, IDENTIFIER "let") -> (newLex, LET)
+            (newLex, IDENTIFIER "if") -> (newLex, IF)
+            (newLex, IDENTIFIER "while") -> (newLex, WHILE)
+            (newLex, IDENTIFIER "else") -> (newLex, ELSE)
+            (newLex, IDENTIFIER "scanln!") -> (newLex, SCAN)
+            _ -> lexWithIdentifier
+  | isDigit nextChar = getNextParse nextLex (INT 0) insInt emptyBuilder
+  | otherwise = case nextChar of
+      '+' -> (nextLex, PLUS)
+      '-' -> (nextLex, MINUS)
+      '^' -> (nextLex, XOR)
+      '!' -> (nextLex, NOT)
+      '/' -> (nextLex, DIV)
+      '(' -> (nextLex, OPEN_PAR)
+      ')' -> (nextLex, CLOSE_PAR)
+      '{' -> (nextLex, OPEN_BRA)
+      '}' -> (nextLex, CLOSE_BRA)
+      '>' -> (nextLex, GREATER)
+      '<' -> (nextLex, LESSER)
+      ';' -> (nextLex, END)
+      '*' -> case nextNextChar of
+        '*' -> (nextNextLex, POWER)
+        _ -> (nextLex, MULT)
+      '=' -> case nextNextChar of
+        '=' -> (nextNextLex, EQUAL)
+        _ -> (nextLex, ASSIGN)
+      '&' -> case nextNextChar of
+        '&' -> (nextNextLex, AND)
+        _ -> compilerLexerError (nextPos, nextChar) "Invalid token at position"
+      '|' -> case nextNextChar of
+        '|' -> (nextNextLex, OR)
+        _ -> compilerLexerError (nextPos, nextChar) "Invalid token at position"
+      _ -> compilerLexerError (nextPos, nextChar) "Invalid token at position"
   where
     nextPos = position + 1
     nextChar = source !! nextPos
-
-    newLex = Lexer source
-    newLexPos = newLex nextPos
-    newLexerState :: Token -> LexerState
-    newLexerState t = (newLexPos, t)
-
-    nextCharEq :: Char -> Bool
-    nextCharEq c = nextChar == c
+    nextLex = Lexer source nextPos
 
     emptyBuilder = ""
 
-getNextParseStar :: Lexer -> LexerState
-getNextParseStar (Lexer source position) = case nextChar of
-  '*' -> (newLex nextPos, Token.POWER)
-  _ -> (newLex position, Token.MULT)
-  where
-    nextPos = position + 1
-    nextChar = source !! nextPos
-    newLex = Lexer source
+    nextNextPos = nextPos + 1
+    nextNextChar = source !! nextNextPos
+    nextNextLex = Lexer source nextNextPos
 
-getNextParseEqual :: Lexer -> LexerState
-getNextParseEqual (Lexer source position) = case nextChar of
-  '=' -> (newLex nextPos, Token.EQUAL)
-  _ -> (newLex position, Token.ASSIGN)
+getNextParse :: Lexer -> Token -> (Char -> Bool) -> String -> LexerState
+getNextParse (Lexer source position) token isIdentifier building = case token of
+  IDENTIFIER _
+    | position >= length source -> (currentLex, IDENTIFIER building)
+    | isIdentifier currentChar -> getNextParse nextLex (IDENTIFIER "") isIdentifier (building ++ [currentChar])
+    | otherwise -> (prevLex, IDENTIFIER building)
+  INT _
+    | position >= length source -> (currentLex, INT (read building :: Int))
+    | isIdentifier currentChar -> getNextParse nextLex (INT 0) isIdentifier (building ++ [currentChar])
+    | otherwise -> (prevLex, INT (read building :: Int))
   where
-    nextPos = position + 1
-    nextChar = source !! nextPos
-    newLex = Lexer source
+    currentLex = Lexer source position
+    nextLex = Lexer source (position + 1)
+    prevLex = Lexer source (position - 1)
 
-getNextParseAnd :: Lexer -> LexerState
-getNextParseAnd (Lexer source position) = case nextChar of
-  '&' -> (newLex nextPos, Token.AND)
-  _ -> error $ "[Lexer] invalid token at position " ++ show nextPos ++ "got " ++ show nextChar
-  where
-    nextPos = position + 1
-    nextChar = source !! nextPos
-    newLex = Lexer source
-
-getNextParseOr :: Lexer -> LexerState
-getNextParseOr (Lexer source position) = case nextChar of
-  '|' -> (newLex nextPos, Token.OR)
-  _ -> error $ "[Lexer] invalid token at position " ++ show nextPos ++ "got " ++ show nextChar
-  where
-    nextPos = position + 1
-    nextChar = source !! nextPos
-    newLex = Lexer source
-
-{-
-For functions that look for len > 1 tokens:
-Receives current pos and works from there, returns: end of token +1 = pos
-On base: position - 1, since the loop preemptively adds 1, when its over it will be on the next char, but finished
--}
-
-getNextParseIdentifier :: Lexer -> String -> LexerState
-getNextParseIdentifier (Lexer source position) buildingIdentifier
-  | position >= length source =
-      (Lexer source position, Token.IDENTIFIER buildingIdentifier)
-  | isIdentifier currentChar =
-      getNextParseIdentifier
-        (Lexer source (position + 1))
-        (buildingIdentifier ++ [currentChar])
-  | otherwise =
-      (Lexer source (position - 1), Token.IDENTIFIER buildingIdentifier)
-  where
-    isIdentifier c = isAlphaNum c || c == '_' || c == '!'
-    currentChar = source !! position
-
-getNextParseInt :: Lexer -> String -> LexerState
-getNextParseInt (Lexer source position) buildingInt
-  | position >= length source =
-      (Lexer source position, Token.INT (read buildingInt :: Int))
-  | isDigit currentChar =
-      getNextParseInt
-        (Lexer source (position + 1))
-        (buildingInt ++ [currentChar])
-  | otherwise =
-      (Lexer source (position - 1), Token.INT (read buildingInt :: Int))
-  where
     currentChar = source !! position

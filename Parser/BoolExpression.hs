@@ -1,24 +1,23 @@
 module Parser.BoolExpression (parseBoolExpression) where
 
+import CompilerError (compilerParserError)
 import Lexer (Lexer (..), getNext)
-import Parser.Parser (Parser)
 import Parser.BoolTerm (parseBoolTerm)
-import Semantic
-import Token
+import Parser.Parser (Parser)
+import Semantic (Node (BinOp))
+import Token (Token (OR))
 
 parseBoolExpression :: Parser Node
-parseBoolExpression (Lexer source position, token) = case token of
-  Token.OR -> expected
+parseBoolExpression lexerState = case token of
+  OR -> compilerParserError lexerState "Expected BoolExpression"
   _ -> parseBoolExpressionLoop nextLex leftNode
   where
-    (nextLex, leftNode) = parseBoolTerm (lex, token)
-    expected = error $ "[Parser] Expected BoolExpression, got: " ++ show token ++ ", at position: " ++ show position
-    lex = Lexer source position
+    (_, token) = lexerState
+    (nextLex, leftNode) = parseBoolTerm lexerState
 
 parseBoolExpressionLoop :: (Lexer, Token) -> Node -> ((Lexer, Token), Node)
-parseBoolExpressionLoop (Lexer source position, token) leftNode = case token of
-  Token.OR -> parseBoolExpressionLoop nextLex (Semantic.BinOp "||" leftNode rightNode)
+parseBoolExpressionLoop (lex, token) leftNode = case token of
+  OR -> parseBoolExpressionLoop nextLex (BinOp "||" leftNode rightNode)
   _ -> ((lex, token), leftNode)
   where
     (nextLex, rightNode) = parseBoolTerm (getNext lex)
-    lex = Lexer source position

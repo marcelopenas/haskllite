@@ -1,9 +1,10 @@
 {-# LANGUAGE BangPatterns #-}
 
-module Semantic where
+module Semantic (evaluate, execute, Node (..)) where
 
+import CompilerError (compilerSemanticError)
 import Control.Monad (foldM)
-import Data.Bits
+import Data.Bits (Bits (xor, (.&.), (.|.)))
 import GHC.IO (unsafePerformIO)
 import SymbolTable (SymbolTable, getSymbol, setSymbol)
 
@@ -24,37 +25,35 @@ data Node
 evaluate :: Node -> SymbolTable -> Int
 evaluate Scan st = unsafePerformIO (readLn :: IO Int)
 evaluate (IntNode n) st = n
-evaluate (UnOp "+" a) st = evaluate a st
-evaluate (UnOp "-" a) st = -evaluate a st
-evaluate (UnOp "!" a) st = fromEnum $ not $ toEnum $ evaluate a st
-evaluate (BinOp "+" a b) st = evaluate a st + evaluate b st
-evaluate (BinOp "-" a b) st = evaluate a st - evaluate b st
-evaluate (BinOp "^" a b) st = evaluate a st `xor` evaluate b st
-evaluate (BinOp "*" a b) st = evaluate a st * evaluate b st
-evaluate (BinOp "/" a (IntNode 0)) st = error "[Semantic] Division by zero"
-evaluate (BinOp "/" a b) st = evaluate a st `div` evaluate b st
-evaluate (BinOp "**" a b) st
-  | evaluate b st < 0 = error "[Semantic] Negative exponent not supported"
-  | otherwise = evaluate a st ^ evaluate b st
-evaluate (BinOp "==" a b) st = fromEnum $ evaluate a st == evaluate b st
-evaluate (BinOp ">" a b) st = fromEnum $ evaluate a st > evaluate b st
-evaluate (BinOp "<" a b) st = fromEnum $ evaluate a st < evaluate b st
-evaluate (BinOp "&&" a b) st
-  | abs (evaluate a st) .&. abs (evaluate b st) >= 1 = 1
-  | otherwise = 0
-evaluate (BinOp "||" a b) st
-  | abs (evaluate a st) .|. abs (evaluate b st) >= 1 = 1
-  | otherwise = 0
-evaluate (Identifier name) st = getSymbol name st -- Return content
+evaluate (UnOp op a) st = case op of
+  "+" -> a'
+  "-" -> -a'
+  "!" -> fromEnum $ not $ toEnum a'
+  where
+    a' = evaluate a st
+evaluate (BinOp op a b) st = case op of
+  "+" -> a' + b'
+  "-" -> a' - b'
+  "^" -> a' `xor` b'
+  "*" -> a' * b'
+  "**" -> if b' > 0 then a' ^ b' else compilerSemanticError "Negative exponent not supported"
+  "/" -> if b' > 0 then a' `div` b' else compilerSemanticError "Division by zero"
+  "==" -> fromEnum $ a' == b'
+  ">" -> fromEnum $ a' > b'
+  "<" -> fromEnum $ a' < b'
+  "&&" -> if abs a' .&. abs b' >= 1 then 1 else 0
+  "||" -> if abs a' .|. abs b' >= 1 then 1 else 0
+  where
+    a' = evaluate a st
+    b' = evaluate b st
+evaluate (Identifier name) st = getSymbol name st
 
 execute :: Node -> SymbolTable -> IO SymbolTable
 execute (Print node) st = do
   print (evaluate node st)
   return st
 execute (Assignment name expr immutable) st = do
-  -- Get value
   let !value = evaluate expr st
-  -- Assign
   let !st' = setSymbol (name, (value, immutable)) st
   return st'
 execute (Block nodes) st = do

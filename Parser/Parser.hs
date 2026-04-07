@@ -1,8 +1,6 @@
-module Parser.Parser (Parser, Scanner) where
+module Parser.Parser (Parser) where
 
-import Lexer (Lexer)
+import Lexer (Lexer, LexerState)
 import Token (Token)
 
-type Scanner = (Lexer, Token)
-
-type Parser a = Scanner -> (Scanner, a)
+type Parser a = LexerState -> (LexerState, a)

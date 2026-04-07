@@ -1,26 +1,26 @@
 module Parser.Expression (parseExpression) where
 
-import Lexer (Lexer (..), getNext)
+import CompilerError (compilerParserError)
+import Lexer (Lexer (..), LexerState, getNext)
 import Parser.Parser (Parser)
 import Parser.Term (parseTerm)
-import Semantic
-import Token
+import Semantic (Node (BinOp))
+import Token (Token (MINUS, PLUS))
 
 parseExpression :: Parser Node
-parseExpression (Lexer source position, token) = case token of
-  Token.PLUS -> expected
-  Token.MINUS -> expected
+parseExpression (lex, token) = case token of
+  PLUS -> compilerParserError lexerState "Expected INT"
+  MINUS -> compilerParserError lexerState "Expected INT"
   _ -> parseExpressionLoop nextLex leftNode
   where
-    (nextLex, leftNode) = parseTerm (lex, token)
-    expected = error $ "[Parser] Expected INT, got: " ++ show token ++ ", at position: " ++ show position
-    lex = Lexer source position
+    lexerState = (lex, token)
+    (nextLex, leftNode) = parseTerm lexerState
 
-parseExpressionLoop :: (Lexer, Token) -> Node -> ((Lexer, Token), Node)
-parseExpressionLoop (Lexer source position, token) leftNode = case token of
-  Token.PLUS -> parseExpressionLoop nextLex (Semantic.BinOp "+" leftNode rightNode)
-  Token.MINUS -> parseExpressionLoop nextLex (Semantic.BinOp "-" leftNode rightNode)
-  _ -> ((lex, token), leftNode)
+parseExpressionLoop :: LexerState -> Node -> (LexerState, Node)
+parseExpressionLoop (lex, token) leftNode = case token of
+  PLUS -> parseExpressionLoop nextLex (BinOp "+" leftNode rightNode)
+  MINUS -> parseExpressionLoop nextLex (BinOp "-" leftNode rightNode)
+  _ -> (lexerState, leftNode)
   where
-    (nextLex, rightNode) = parseTerm (getNext lex)
-    lex = Lexer source position
+    lexerState = (lex, token)
+    (nextLex, rightNode) = parseTerm $ getNext lex

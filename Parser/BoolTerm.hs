@@ -1,24 +1,24 @@
 module Parser.BoolTerm (parseBoolTerm) where
 
-import Lexer (Lexer (..), getNext)
+import CompilerError (compilerParserError)
+import Lexer (Lexer (..), LexerState, getNext)
 import Parser.Parser (Parser)
 import Parser.RelExpression (parseRelExpression)
-import Semantic
-import Token
+import Semantic (Node (BinOp))
+import Token (Token (AND))
 
 parseBoolTerm :: Parser Node
-parseBoolTerm (Lexer source position, token) = case token of
-  Token.AND -> expected
+parseBoolTerm (lex, token) = case token of
+  AND -> compilerParserError lexerState "Expected BoolTerm"
   _ -> parseBoolTermLoop nextLex leftNode
   where
-    (nextLex, leftNode) = parseRelExpression (lex, token)
-    expected = error $ "[Parser] Expected BoolTerm, got: " ++ show token ++ ", at position: " ++ show position
-    lex = Lexer source position
+    lexerState = (lex, token)
+    (nextLex, leftNode) = parseRelExpression lexerState
 
-parseBoolTermLoop :: (Lexer, Token) -> Node -> ((Lexer, Token), Node)
-parseBoolTermLoop (Lexer source position, token) leftNode = case token of
-  Token.AND -> parseBoolTermLoop nextLex (Semantic.BinOp "&&" leftNode rightNode)
-  _ -> ((lex, token), leftNode)
+parseBoolTermLoop :: LexerState -> Node -> (LexerState, Node)
+parseBoolTermLoop (lex, token) leftNode = case token of
+  AND -> parseBoolTermLoop nextLex (BinOp "&&" leftNode rightNode)
+  _ -> (lexerState, leftNode)
   where
+    lexerState = (lex, token)
     (nextLex, rightNode) = parseRelExpression (getNext lex)
-    lex = Lexer source position

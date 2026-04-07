@@ -1,9 +1,8 @@
 module Parser.Expression (parseExpression) where
 
-import Lexer (Lexer (..),)
+import Lexer (LexerState)
 import Parser.Parser (Parser)
-import Semantic ( Node )
-import Token ( Token )
+import Semantic (Node)
 
 parseExpression :: Parser Node
-parseExpressionLoop :: (Lexer, Token) -> Node -> ((Lexer, Token), Node)
+parseExpressionLoop :: LexerState -> Node -> (LexerState, Node)

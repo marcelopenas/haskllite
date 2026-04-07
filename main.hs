@@ -12,5 +12,5 @@ main = do
     else do
       let filePath = head args
       compilerInput <- readFile filePath
-      execute (run $ preProcess compilerInput) newSymbolTable
+      !table <- execute (run $ preProcess compilerInput ++ "\n") newSymbolTable
       return ()

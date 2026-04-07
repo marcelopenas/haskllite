@@ -1,41 +1,38 @@
-module Parser.Block where
+module Parser.Block (parseBlock) where
 
-import CompilerError (compilerError)
-import CompilerError qualified
-import Data.Graph (Tree (Node))
-import Lexer (Lexer (..), getNext)
-import Parser.Parser (Parser, Scanner)
+import CompilerError (compilerParserError)
+import Lexer (Lexer (..), LexerState, getNext)
+import Parser.Parser (Parser)
 import Parser.Statement (parseStatement)
-import Semantic (Node)
-import Semantic qualified as Node
+import Semantic (Node (Block))
 import Token (Token (CLOSE_BRA, EOF, OPEN_BRA))
 
 parseBlock :: Parser Node
 parseBlock (lex, token) = case token of
-  Token.OPEN_BRA -> (statementScanner, Node.Block statementNode)
-  _ -> compilerError (lex, token) CompilerError.ParserError "expected open bracket on block"
+  OPEN_BRA -> (statementLexerState, Block statementNode)
+  _ -> compilerParserError lexerState "Expected open bracket on block"
   where
-    (statementScanner, statementNode) = parseBlockStatement $ getNext lex
+    lexerState = (lex, token)
+    (statementLexerState, statementNode) = parseBlockStatement $ getNext lex
 
 parseBlockStatement :: Parser [Node]
 parseBlockStatement (lex, token) = case token of
-  Token.CLOSE_BRA -> (getNext lex, [])
-  _ -> parseBlockCloseBra $ parseBlockStatementLoop (scanner, [])
+  CLOSE_BRA -> (getNext lex, [])
+  _ -> parseBlockCloseBra $ parseBlockStatementLoop (lexerState, [])
   where
-    scanner = (lex, token)
+    lexerState = (lex, token)
 
-parseBlockStatementLoop :: (Scanner, [Node]) -> (Scanner, [Node])
+parseBlockStatementLoop :: (LexerState, [Node]) -> (LexerState, [Node])
 parseBlockStatementLoop ((lex, token), nodes) = case token of
-  Token.CLOSE_BRA -> (scanner, nodes)
-  _ -> parseBlockStatementLoop ((nextLex, nextToken), nextNode : nodes)
+  CLOSE_BRA -> (lexerState, nodes)
+  _ -> parseBlockStatementLoop (nextLexerState, nextNode : nodes)
   where
-    scanner = (lex, token)
-    ((nextLex, nextToken), nextNode) = parseStatement scanner
+    lexerState = (lex, token)
+    (nextLexerState, nextNode) = parseStatement lexerState
 
-parseBlockCloseBra :: (Scanner, [Node]) -> (Scanner, [Node])
-parseBlockCloseBra (scanner, nodes) = case token of
-  Token.CLOSE_BRA -> (getNext lex, nodes)
-  _ -> compilerError scanner CompilerError.ParserError "expected close bracket on block"
+parseBlockCloseBra :: (LexerState, [Node]) -> (LexerState, [Node])
+parseBlockCloseBra (lexerState, nodes) = case token of
+  CLOSE_BRA -> (getNext lex, nodes)
+  _ -> compilerParserError lexerState "Expected close bracket on block"
   where
-    (lex, token) = scanner
-    (Lexer _ position) = lex
+    (lex, token) = lexerState

@@ -1,8 +1,6 @@
 module Parser.Block where
 
-import Parser.Parser (Parser, Scanner)
-import Semantic (Node (Block))
-import Token (Token)
+import Parser.Parser (Parser)
+import Semantic (Node)
 
 parseBlock :: Parser Node
-parseBlockCloseBra :: (Scanner, [Node]) -> (Scanner, [Node])

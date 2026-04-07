@@ -1,21 +1,20 @@
 module Parser.Term (parseTerm) where
 
-import Lexer (Lexer (..), getNext)
+import Lexer (Lexer (..), LexerState, getNext)
 import Parser.Factor (parseFactor)
 import Parser.Parser (Parser)
-import Semantic
-import Token
+import Semantic (Node (BinOp))
+import Token (Token (DIV, MULT))
 
 parseTerm :: Parser Node
 parseTerm scanner = parseTermLoop nextLex leftNode
   where
     (nextLex, leftNode) = parseFactor scanner
 
-parseTermLoop :: (Lexer, Token) -> Node -> ((Lexer, Token), Node)
-parseTermLoop (Lexer source position, token) leftNode = case token of
-  Token.MULT -> parseTermLoop nextLex (Semantic.BinOp "*" leftNode rightNode)
-  Token.DIV -> parseTermLoop nextLex (Semantic.BinOp "/" leftNode rightNode)
+parseTermLoop :: LexerState -> Node -> (LexerState, Node)
+parseTermLoop (lex, token) leftNode = case token of
+  MULT -> parseTermLoop nextLex (BinOp "*" leftNode rightNode)
+  DIV -> parseTermLoop nextLex (BinOp "/" leftNode rightNode)
   _ -> ((lex, token), leftNode)
   where
-    (nextLex, rightNode) = parseFactor (getNext lex)
-    lex = Lexer source position
+    (nextLex, rightNode) = parseFactor $ getNext lex

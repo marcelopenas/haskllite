@@ -1,9 +1,9 @@
 module Parser.Factor (parseFactor) where
 
-import CompilerError (CompilerError (ParserError), compilerError)
-import Lexer (Lexer (..), getNext)
+import CompilerError (compilerParserError)
+import Lexer (Lexer (..), LexerState, getNext)
 import {-# SOURCE #-} Parser.BoolExpression (parseBoolExpression)
-import Parser.Parser (Parser, Scanner)
+import Parser.Parser (Parser)
 import Semantic
 import Token
 
@@ -26,19 +26,19 @@ parseFactor (Lexer source position, token) = case token of
     lexAfterOpen = Lexer sourceAfterOpen positionAfterOpen
     lex = Lexer source position
 
-parseFactorScan :: Scanner -> Scanner
+parseFactorScan :: LexerState -> LexerState
 parseFactorScan (lex, token) = case token of
   Token.OPEN_PAR -> parseFactorClose nextScanner
-  _ -> compilerError scanner CompilerError.ParserError "Expected open par"
+  _ -> compilerParserError scanner "Expected open par"
   where
     scanner = (lex, token)
     (Lexer source position) = lex
     nextScanner = getNext lex
 
-parseFactorClose :: Scanner -> Scanner
+parseFactorClose :: LexerState -> LexerState
 parseFactorClose (lex, token) = case token of
   Token.CLOSE_PAR -> nextScanner
-  _ -> compilerError scanner CompilerError.ParserError "Expected close par"
+  _ -> compilerParserError scanner "Expected close par"
   where
     scanner = (lex, token)
     (Lexer source position) = lex

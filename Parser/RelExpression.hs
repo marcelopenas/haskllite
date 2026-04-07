@@ -1,28 +1,27 @@
 module Parser.RelExpression (parseRelExpression) where
 
-import Lexer (Lexer (..), getNext)
-import Parser.Parser (Parser)
+import CompilerError (compilerParserError)
+import Lexer (Lexer (..), LexerState, getNext)
 import Parser.Expression (parseExpression)
-import Semantic
-import Token
+import Parser.Parser (Parser)
+import Semantic (Node (BinOp))
+import Token (Token (EQUAL, GREATER, LESSER))
 
 parseRelExpression :: Parser Node
-parseRelExpression (Lexer source position, token) = case token of
-  Token.EQUAL -> expected
-  Token.GREATER -> expected
-  Token.LESSER -> expected
+parseRelExpression (lex, token) = case token of
+  EQUAL -> compilerParserError lexerState "Expected RelExpression"
+  GREATER -> compilerParserError lexerState "Expected RelExpression"
+  LESSER -> compilerParserError lexerState "Expected RelExpression"
   _ -> parseRelExpressionLoop nextLex leftNode
   where
-    (nextLex, leftNode) = parseExpression (lex, token)
-    expected = error $ "[Parser] Expected RelExpression, got: " ++ show token ++ ", at position: " ++ show position
-    lex = Lexer source position
+    lexerState = (lex, token)
+    (nextLex, leftNode) = parseExpression lexerState
 
-parseRelExpressionLoop :: (Lexer, Token) -> Node -> ((Lexer, Token), Node)
-parseRelExpressionLoop (Lexer source position, token) leftNode = case token of
-  Token.EQUAL -> parseRelExpressionLoop nextLex (Semantic.BinOp "==" leftNode rightNode)
-  Token.GREATER -> parseRelExpressionLoop nextLex (Semantic.BinOp ">" leftNode rightNode)
-  Token.LESSER -> parseRelExpressionLoop nextLex (Semantic.BinOp "<" leftNode rightNode)
+parseRelExpressionLoop :: LexerState -> Node -> (LexerState, Node)
+parseRelExpressionLoop (lex, token) leftNode = case token of
+  EQUAL -> parseRelExpressionLoop nextLex (BinOp "==" leftNode rightNode)
+  GREATER -> parseRelExpressionLoop nextLex (BinOp ">" leftNode rightNode)
+  LESSER -> parseRelExpressionLoop nextLex (BinOp "<" leftNode rightNode)
   _ -> ((lex, token), leftNode)
   where
     (nextLex, rightNode) = parseExpression (getNext lex)
-    lex = Lexer source position

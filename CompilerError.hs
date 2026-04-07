@@ -1,14 +1,16 @@
-module CompilerError (compilerError, CompilerError(..)) where
+module CompilerError (compilerParserError, compilerSemanticError, compilerLexerError) where
 
-import Lexer (Lexer (..), LexerState)
+import {-# SOURCE #-} Lexer (Lexer (..), LexerState)
 import Token (Token)
 
-data CompilerError = ParserError | LexerError
+compilerParserError :: LexerState -> String -> a
+compilerParserError (Lexer source position, token) message =
+  error $ "[Parser] " ++ message ++ ", got: " ++ show token ++ " at: " ++ show position
 
-compilerError :: LexerState -> CompilerError -> String -> a
-compilerError (Lexer source position, token) errorType message =
-  error $ errorTypeMessage ++ message ++ ", got: " ++ show token ++ " at: " ++ show position
-  where
-    errorTypeMessage = case errorType of
-      ParserError -> "[Parser] "
-      LexerError -> "[Lexer] "
+compilerLexerError :: (Int, Char) -> String -> a
+compilerLexerError (nextPos, nextChar) message =
+  error $ "[Lexer] " ++ message ++ ", got " ++ show nextChar ++ " at: " ++ show nextPos
+
+compilerSemanticError :: String -> a
+compilerSemanticError message =
+  error $ "[Semantic] " ++ message
