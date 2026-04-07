@@ -22,7 +22,7 @@ data Node
   deriving (Show)
 
 evaluate :: Node -> SymbolTable -> Int
-evaluate Scan st = read $ unsafePerformIO readLn
+evaluate Scan st = unsafePerformIO (readLn :: IO Int)
 evaluate (IntNode n) st = n
 evaluate (UnOp "+" a) st = evaluate a st
 evaluate (UnOp "-" a) st = -evaluate a st
@@ -39,8 +39,12 @@ evaluate (BinOp "**" a b) st
 evaluate (BinOp "==" a b) st = fromEnum $ evaluate a st == evaluate b st
 evaluate (BinOp ">" a b) st = fromEnum $ evaluate a st > evaluate b st
 evaluate (BinOp "<" a b) st = fromEnum $ evaluate a st < evaluate b st
-evaluate (BinOp "&&" a b) st = evaluate a st .&. evaluate b st
-evaluate (BinOp "||" a b) st = evaluate a st .|. evaluate b st
+evaluate (BinOp "&&" a b) st
+  | abs (evaluate a st) .&. abs (evaluate b st) >= 1 = 1
+  | otherwise = 0
+evaluate (BinOp "||" a b) st
+  | abs (evaluate a st) .|. abs (evaluate b st) >= 1 = 1
+  | otherwise = 0
 evaluate (Identifier name) st = getSymbol name st -- Return content
 
 execute :: Node -> SymbolTable -> IO SymbolTable

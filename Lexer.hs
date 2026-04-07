@@ -1,5 +1,6 @@
 module Lexer
   ( Lexer (..),
+    LexerState,
     getNext,
   )
 where

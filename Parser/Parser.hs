@@ -1,4 +1,4 @@
-module Parser.Parser (Parser) where
+module Parser.Parser (Parser, Scanner) where
 
 import Lexer (Lexer)
 import Token (Token)
