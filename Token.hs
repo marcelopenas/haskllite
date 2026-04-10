@@ -1,11 +1,18 @@
 module Token
   ( Token (..),
+    VarType (..),
   )
 where
 
 type Name = String
 
 type Immutable = Bool
+
+data VarType
+  = I32T
+  | BooleanT
+  | StrT
+  deriving (Show, Eq)
 
 data Token
   = INT Int
@@ -33,6 +40,11 @@ data Token
   | END
   | PRINT
   | LET
+  | MUT
+  | TYPE VarType
+  | TYPE_ASSIGN
+  | BOOLEAN Bool
+  | STR String
   | IDENTIFIER Name
   | EOF
   deriving (Show, Eq)

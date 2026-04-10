@@ -15,7 +15,7 @@
 ```ebnf
 PROGRAM = { STATEMENT };
 
-STATEMENT = ((IF, "(", BOOLEXPRESSION, ")", STATEMENT, ("ELSE", STATEMENT) | ε) | (WHILE, "(", BOOLEXPRESSION, ")", STATEMENT) | (IDENTIFIER, "=", BOOLEXPRESSION) | (PRINT, "(", BOOLEXPRESSION, ")") | ε), EOL;
+STATEMENT = ((IF, "(", BOOLEXPRESSION, ")", STATEMENT, ("ELSE", STATEMENT) | epsilon) | (WHILE, "(", BOOLEXPRESSION, ")", STATEMENT) | (IDENTIFIER, "=", BOOLEXPRESSION) | (PRINT, "(", BOOLEXPRESSION, ")") | epsilon), EOL;
 
 BOOLEXPRESSION = BOOLTERM, { "||", BOOLTERM };
 
@@ -31,11 +31,11 @@ FACTOR = ("+" | "-"), FACTOR | "(", BOOLEXPRESSION, ")" | NUMBER | READ, "(", ")
 
 NUMBER = DIGIT, { DIGIT };
 
-DIGIT = 0 | 1 | ... | 9;
+DIGIT = 0* | 1* | '...' | 9*;
 
 IDENTIFIER = LETTER, {LETTER | DIGIT | "_"};
 
-LETTER = a | b | ... | z | A | B | ... | Z;
+LETTER = a | b | '...' | z | A | B | '...' | Z;
 
 ```
 

@@ -3,10 +3,18 @@ module SymbolTable
     getSymbol,
     setSymbol,
     newSymbolTable,
+    Content (..),
   )
 where
 
-type Content = Int
+data Content = IntContent Int | StringContent String | BoolContent Bool deriving (Eq)
+
+instance Show Content where
+  show :: Content -> String
+  show (IntContent s) = show s
+  show (StringContent s) = s
+  show (BoolContent True) = "True"
+  show (BoolContent False) = "False"
 
 type Variable = (Content, Immutable)
 

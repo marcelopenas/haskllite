@@ -6,10 +6,12 @@ import CompilerError (compilerSemanticError)
 import Control.Monad (foldM)
 import Data.Bits (Bits (xor, (.&.), (.|.)))
 import GHC.IO (unsafePerformIO)
-import SymbolTable (SymbolTable, getSymbol, setSymbol)
+import SymbolTable (Content (..), SymbolTable, getSymbol, setSymbol)
 
 data Node
   = IntNode Int
+  | BoolNode Bool
+  | StringNode String
   | UnOp String Node
   | BinOp String Node Node
   | Identifier String
@@ -22,27 +24,50 @@ data Node
   | NoOp
   deriving (Show)
 
-evaluate :: Node -> SymbolTable -> Int
-evaluate Scan st = unsafePerformIO (readLn :: IO Int)
-evaluate (IntNode n) st = n
-evaluate (UnOp op a) st = case op of
-  "+" -> a'
-  "-" -> -a'
-  "!" -> fromEnum $ not $ toEnum a'
+evaluate :: Node -> SymbolTable -> Content
+evaluate Scan st = IntContent $ unsafePerformIO (readLn :: IO Int) -- TODO cast other types depending on :
+evaluate (IntNode n) st = IntContent n
+evaluate (BoolNode n) st = IntContent $ fromEnum n
+evaluate (StringNode n) st = StringContent n
+evaluate (UnOp op a) st = case (op, a') of
+  ("+", IntContent a') -> IntContent a'
+  ("+", _) -> compilerSemanticError "Invalid operator UnOp + for non i32"
+  ("-", IntContent a') -> IntContent $ -a'
+  ("-", _) -> compilerSemanticError "Invalid operator UnOp - for non i32"
+  ("!", IntContent a') -> IntContent $ fromEnum $ not $ toEnum a'
+  ("!", BoolContent a') -> BoolContent $ not a'
+  ("!", _) -> compilerSemanticError "Invalid operator UnOp ! for non i32 | bool"
   where
     a' = evaluate a st
-evaluate (BinOp op a b) st = case op of
-  "+" -> a' + b'
-  "-" -> a' - b'
-  "^" -> a' `xor` b'
-  "*" -> a' * b'
-  "**" -> if b' > 0 then a' ^ b' else compilerSemanticError "Negative exponent not supported"
-  "/" -> if b' > 0 then a' `div` b' else compilerSemanticError "Division by zero"
-  "==" -> fromEnum $ a' == b'
-  ">" -> fromEnum $ a' > b'
-  "<" -> fromEnum $ a' < b'
-  "&&" -> if abs a' .&. abs b' >= 1 then 1 else 0
-  "||" -> if abs a' .|. abs b' >= 1 then 1 else 0
+evaluate (BinOp op a b) st = case (op, a', b') of
+  ("+", IntContent a', IntContent b') -> IntContent $ a' + b'
+  ("+", _, _) -> compilerSemanticError "Invalid operator BinOp + for non i32"
+  ("-", IntContent a', IntContent b') -> IntContent $ a' - b'
+  ("-", _, _) -> compilerSemanticError "Invalid operator BinOp - for non i32"
+  ("^", IntContent a', IntContent b') -> IntContent $ a' `xor` b'
+  ("^", BoolContent a', BoolContent b') -> BoolContent $ a' `xor` b'
+  ("^", _', _) -> compilerSemanticError "Invalid operator BinOp - for non i32 | bool"
+  ("*", IntContent a', IntContent b') -> IntContent $ a' * b'
+  ("*", _, _) -> compilerSemanticError "Invalid operator BinOp * for non i32"
+  ("**", IntContent a', IntContent b') -> IntContent $ if b' > 0 then a' ^ b' else compilerSemanticError "Negative exponent not supported"
+  ("**", _, _) -> compilerSemanticError "Invalid operator BinOp * for non i32"
+  ("/", IntContent a', IntContent b') -> IntContent $ if b' > 0 then a' `div` b' else compilerSemanticError "Division by zero"
+  ("/", _, _) -> compilerSemanticError "Invalid operator BinOp * for non i32"
+  ("==", IntContent a', IntContent b') -> BoolContent $ a' == b'
+  ("==", BoolContent a', BoolContent b') -> BoolContent $ a' == b'
+  ("==", StringContent a', StringContent b') -> BoolContent $ a' == b'
+  (">", IntContent a', IntContent b') -> BoolContent $ a' > b'
+  (">", BoolContent a', BoolContent b') -> BoolContent $ a' > b'
+  (">", StringContent a', StringContent b') -> BoolContent $ a' > b'
+  ("<", IntContent a', IntContent b') -> BoolContent $ a' < b'
+  ("<", BoolContent a', BoolContent b') -> BoolContent $ a' < b'
+  ("<", StringContent a', StringContent b') -> BoolContent $ a' < b'
+  ("&&", IntContent a', IntContent b') -> BoolContent $ abs a' .&. abs b' >= 1
+  ("&&", BoolContent a', BoolContent b') -> BoolContent $ a' && b'
+  ("&&", _, _) -> compilerSemanticError "Invalid operator BinOp && for non i32 | bool"
+  ("||", IntContent a', IntContent b') -> BoolContent $ abs a' .|. abs b' >= 1
+  ("||", BoolContent a', BoolContent b') -> BoolContent $ a' || b'
+  ("||", _, _) -> compilerSemanticError "Invalid operator BinOp || for non i32 | bool"
   where
     a' = evaluate a st
     b' = evaluate b st
@@ -60,14 +85,14 @@ execute (Block nodes) st = do
   foldM (flip execute) st (reverse nodes) -- Nodes will be right to left, thus reverse nodes
 execute (If evalNode ifNode elseNode) st = do
   let !value = evaluate evalNode st
-  if value == 1
+  if value == BoolContent True
     then do
       execute ifNode st
     else do
       execute elseNode st
 execute (While evalNode node) st = do
   let !value = evaluate evalNode st
-  if value == 1
+  if value == BoolContent True
     then do
       !nextSt <- execute node st
       execute (While evalNode node) nextSt

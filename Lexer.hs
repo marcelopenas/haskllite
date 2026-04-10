@@ -2,7 +2,7 @@ module Lexer (Lexer (..), LexerState, getNext) where
 
 import CompilerError (compilerLexerError)
 import Data.Char (isAlpha, isAlphaNum, isDigit, isSpace)
-import Token (Token (..))
+import Token (Token (..), VarType (..))
 
 type Source = String
 
@@ -22,16 +22,20 @@ getNext :: Lexer -> (Lexer, Token)
 getNext (Lexer source position)
   | length source <= nextPos = (nextLex, EOF)
   | isSpace nextChar = getNext nextLex -- If space or \n continue
-  | isAlpha nextChar =
-      let lexWithIdentifier = getNextParse nextLex (IDENTIFIER emptyBuilder) isIdentifier emptyBuilder
-       in case lexWithIdentifier of
-            (newLex, IDENTIFIER "println!") -> (newLex, PRINT)
-            (newLex, IDENTIFIER "let") -> (newLex, LET)
-            (newLex, IDENTIFIER "if") -> (newLex, IF)
-            (newLex, IDENTIFIER "while") -> (newLex, WHILE)
-            (newLex, IDENTIFIER "else") -> (newLex, ELSE)
-            (newLex, IDENTIFIER "scanln!") -> (newLex, SCAN)
-            _ -> lexWithIdentifier
+  | isAlpha nextChar = case identifierLexState of
+      (newLex, IDENTIFIER "println!") -> (newLex, PRINT)
+      (newLex, IDENTIFIER "let") -> (newLex, LET)
+      (newLex, IDENTIFIER "mut") -> (newLex, MUT)
+      (newLex, IDENTIFIER "if") -> (newLex, IF)
+      (newLex, IDENTIFIER "while") -> (newLex, WHILE)
+      (newLex, IDENTIFIER "else") -> (newLex, ELSE)
+      (newLex, IDENTIFIER "scanln!") -> (newLex, SCAN)
+      (newLex, IDENTIFIER "true") -> (newLex, BOOLEAN True)
+      (newLex, IDENTIFIER "false") -> (newLex, BOOLEAN False)
+      (newLex, IDENTIFIER "str") -> (newLex, TYPE StrT)
+      (newLex, IDENTIFIER "i32") -> (newLex, TYPE I32T)
+      (newLex, IDENTIFIER "bool") -> (newLex, TYPE BooleanT)
+      _ -> identifierLexState
   | isDigit nextChar = getNextParse nextLex (INT 0) insInt emptyBuilder
   | otherwise = case nextChar of
       '+' -> (nextLex, PLUS)
@@ -46,6 +50,7 @@ getNext (Lexer source position)
       '>' -> (nextLex, GREATER)
       '<' -> (nextLex, LESSER)
       ';' -> (nextLex, END)
+      ':' -> (nextLex, TYPE_ASSIGN)
       '*' -> case nextNextChar of
         '*' -> (nextNextLex, POWER)
         _ -> (nextLex, MULT)
@@ -58,6 +63,7 @@ getNext (Lexer source position)
       '|' -> case nextNextChar of
         '|' -> (nextNextLex, OR)
         _ -> compilerLexerError (nextPos, nextChar) "Invalid token at position"
+      '\"' -> getNextParseString nextLex emptyBuilder
       _ -> compilerLexerError (nextPos, nextChar) "Invalid token at position"
   where
     nextPos = position + 1
@@ -69,6 +75,17 @@ getNext (Lexer source position)
     nextNextPos = nextPos + 1
     nextNextChar = source !! nextNextPos
     nextNextLex = Lexer source nextNextPos
+
+    identifierLexState = getNextParse nextLex (IDENTIFIER emptyBuilder) isIdentifier emptyBuilder
+
+getNextParseString :: Lexer -> String -> LexerState
+getNextParseString (Lexer source position) building = case nextChar of
+  '\"' -> (nextLex, STR $ reverse building)
+  _ -> getNextParseString nextLex (nextChar : building)
+  where
+    nextChar = source !! nextPos
+    nextPos = position + 1
+    nextLex = Lexer source nextPos
 
 getNextParse :: Lexer -> Token -> (Char -> Bool) -> String -> LexerState
 getNextParse (Lexer source position) token isIdentifier building = case token of
