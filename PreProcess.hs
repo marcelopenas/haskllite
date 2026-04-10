@@ -59,6 +59,7 @@ getConstantOccurrence constants source constIndex = (constant : constants, modif
     (constName, constValueIndex) = getConstName identifierIndex source ""
     (constValue, constValueEndIndex) = getConstValue (constValueIndex + 3) source "" -- Accounts for 'const `name` = '
     constant = (constName, constValue)
+    modifiedSource = removeBetween constIndex (constValueEndIndex + 1) source
 
     getConstName :: Int -> String -> String -> (String, Int)
     getConstName currentIndex source buildingString = case currentChar of
@@ -73,8 +74,6 @@ getConstantOccurrence constants source constIndex = (constant : constants, modif
       _ -> getConstValue (currentIndex + 1) source (currentChar : buildingString)
       where
         currentChar = source !! currentIndex
-
-    modifiedSource = removeBetween constIndex (constValueEndIndex + 1) source
 
 -- Replace
 

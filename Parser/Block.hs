@@ -8,31 +8,25 @@ import Semantic (Node (Block))
 import Token (Token (CLOSE_BRA, EOF, OPEN_BRA))
 
 parseBlock :: Parser Node
-parseBlock (lex, token) = case token of
-  OPEN_BRA -> (statementLexerState, Block statementNode)
-  _ -> compilerParserError lexerState "Expected open bracket on block"
+parseBlock lexState@(lex, token) = case token of
+  OPEN_BRA -> (statementLexState, Block statementNode)
+  _ -> compilerParserError lexState "Expected open bracket on block"
   where
-    lexerState = (lex, token)
-    (statementLexerState, statementNode) = parseBlockStatement $ getNext lex
+    (statementLexState, statementNode) = parseBlockStatement $ getNext lex
 
 parseBlockStatement :: Parser [Node]
-parseBlockStatement (lex, token) = case token of
+parseBlockStatement lexState@(lex, token) = case token of
   CLOSE_BRA -> (getNext lex, [])
-  _ -> parseBlockCloseBra $ parseBlockStatementLoop (lexerState, [])
-  where
-    lexerState = (lex, token)
+  _ -> parseBlockCloseBra $ parseBlockStatementLoop (lexState, [])
 
 parseBlockStatementLoop :: (LexerState, [Node]) -> (LexerState, [Node])
-parseBlockStatementLoop ((lex, token), nodes) = case token of
-  CLOSE_BRA -> (lexerState, nodes)
-  _ -> parseBlockStatementLoop (nextLexerState, nextNode : nodes)
+parseBlockStatementLoop (lexState@(lex, token), nodes) = case token of
+  CLOSE_BRA -> (lexState, nodes)
+  _ -> parseBlockStatementLoop (nextLexState, nextNode : nodes)
   where
-    lexerState = (lex, token)
-    (nextLexerState, nextNode) = parseStatement lexerState
+    (nextLexState, nextNode) = parseStatement lexState
 
 parseBlockCloseBra :: (LexerState, [Node]) -> (LexerState, [Node])
-parseBlockCloseBra (lexerState, nodes) = case token of
+parseBlockCloseBra (lexState@(lex, token), nodes) = case token of
   CLOSE_BRA -> (getNext lex, nodes)
-  _ -> compilerParserError lexerState "Expected close bracket on block"
-  where
-    (lex, token) = lexerState
+  _ -> compilerParserError lexState "Expected close bracket on block"

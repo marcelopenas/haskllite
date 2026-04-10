@@ -9,54 +9,44 @@ import Semantic (Node (Assignment, If, NoOp, Print, While))
 import Token (Token (ASSIGN, CLOSE_PAR, ELSE, END, IDENTIFIER, IF, LET, OPEN_PAR, PRINT, WHILE))
 
 parseStatement :: Parser Node
-parseStatement (lex, token) = case token of
-  END -> (nextLexerState, NoOp)
-  LET -> parseStatementLet nextLexerState
-  IDENTIFIER name -> parseStatementAssign name False nextLexerState
-  PRINT -> (parseStatementEnd newLexerState, Print newNode)
-  WHILE -> (afterLexerState, While newNode afterNode)
-  IF -> (afterAfterLexerState, If newNode afterNode afterAfterNode)
-  _ -> parseBlock lexerState
+parseStatement lexState@(lex, token) = case token of
+  END -> (nextLexState, NoOp)
+  LET -> parseStatementLet nextLexState
+  IDENTIFIER name -> parseStatementAssign name False nextLexState
+  PRINT -> (parseStatementEnd openParLexerState, Print openParNode)
+  WHILE -> (statementLexState, While openParNode statementNode)
+  IF ->
+    let (afterStatementLexState, afterAfterNode) = parseStatementElse statementLexState
+     in (afterStatementLexState, If openParNode statementNode afterAfterNode)
+  _ -> parseBlock lexState
   where
-    lexerState = (lex, token)
-    nextLexerState = getNext lex
-    (newLexerState, newNode) = parseBoolExpression $ parseStatementOpenPar nextLexerState
-    (afterLexerState, afterNode) = parseStatement newLexerState
-    (afterAfterLexerState, afterAfterNode) = parseStatementElse afterLexerState
+    nextLexState = getNext lex
+    (openParLexerState, openParNode) = parseBoolExpression $ parseStatementOpenPar nextLexState
+    (statementLexState, statementNode) = parseStatement openParLexerState
 
 parseStatementOpenPar :: LexerState -> LexerState
-parseStatementOpenPar (lex, token) = case token of
-  OPEN_PAR -> lexerState
-  _ -> compilerParserError lexerState "Expected open parenthesis"
-  where
-    lexerState = (lex, token)
+parseStatementOpenPar lexState@(lex, token) = case token of
+  OPEN_PAR -> lexState
+  _ -> compilerParserError lexState "Expected open parenthesis"
 
 parseStatementElse :: Parser Node
-parseStatementElse (lex, token) = case token of
-  ELSE -> (nextScanner, nextNode)
-  _ -> ((lex, token), NoOp)
-  where
-    (nextScanner, nextNode) = parseStatement $ getNext lex
+parseStatementElse lexState@(lex, token) = case token of
+  ELSE -> parseStatement $ getNext lex
+  _ -> (lexState, NoOp)
 
 parseStatementLet :: Parser Node
-parseStatementLet (lex, token) = case token of
-  IDENTIFIER name -> parseStatementAssign name True nextLexerState
-  _ -> compilerParserError lexerState "Expected identifier"
-  where
-    lexerState = (lex, token)
-    nextLexerState = getNext lex
+parseStatementLet lexState@(lex, token) = case token of
+  IDENTIFIER name -> parseStatementAssign name True $ getNext lex
+  _ -> compilerParserError lexState "Expected identifier"
 
 parseStatementAssign :: String -> Bool -> Parser Node
-parseStatementAssign name immutable (lex, token) = case token of
-  ASSIGN -> (parseStatementEnd newLexerState, Assignment name newNode immutable)
-  _ -> compilerParserError lexerState "Expected assignment"
+parseStatementAssign name immutable lexState@(lex, token) = case token of
+  ASSIGN -> (parseStatementEnd expressionLexState, Assignment name newNode immutable)
+  _ -> compilerParserError lexState "Expected assignment"
   where
-    lexerState = (lex, token)
-    (newLexerState, newNode) = parseBoolExpression $ getNext lex
+    (expressionLexState, newNode) = parseBoolExpression $ getNext lex
 
 parseStatementEnd :: (Lexer, Token) -> (Lexer, Token)
-parseStatementEnd (lex, token) = case token of
+parseStatementEnd lexState@(lex, token) = case token of
   END -> getNext lex
-  _ -> compilerParserError lexerState "No END in statement"
-  where
-    lexerState = (lex, token)
+  _ -> compilerParserError lexState "No END in statement"

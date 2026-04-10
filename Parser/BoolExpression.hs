@@ -8,16 +8,13 @@ import Semantic (Node (BinOp))
 import Token (Token (OR))
 
 parseBoolExpression :: Parser Node
-parseBoolExpression lexerState = case token of
-  OR -> compilerParserError lexerState "Expected BoolExpression"
-  _ -> parseBoolExpressionLoop nextLex leftNode
-  where
-    (_, token) = lexerState
-    (nextLex, leftNode) = parseBoolTerm lexerState
+parseBoolExpression lexState@(lex, token) = case token of
+  OR -> compilerParserError lexState "Expected BoolExpression"
+  _ -> parseBoolExpressionLoop `uncurry` parseBoolTerm lexState
 
 parseBoolExpressionLoop :: (Lexer, Token) -> Node -> ((Lexer, Token), Node)
-parseBoolExpressionLoop (lex, token) leftNode = case token of
+parseBoolExpressionLoop lexState@(lex, token) leftNode = case token of
   OR -> parseBoolExpressionLoop nextLex (BinOp "||" leftNode rightNode)
-  _ -> ((lex, token), leftNode)
+  _ -> (lexState, leftNode)
   where
     (nextLex, rightNode) = parseBoolTerm (getNext lex)

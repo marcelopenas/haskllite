@@ -5,4 +5,3 @@ import Parser.Parser (Parser)
 import Semantic (Node)
 
 parseExpression :: Parser Node
-parseExpressionLoop :: LexerState -> Node -> (LexerState, Node)

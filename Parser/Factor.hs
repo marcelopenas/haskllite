@@ -8,39 +8,31 @@ import Semantic
 import Token
 
 parseFactor :: Parser Node
-parseFactor (lex, token) = case token of
-  PLUS -> (afterLex, UnOp "+" rightNode)
-  MINUS -> (afterLex, UnOp "-" rightNode)
-  NOT -> (afterLex, UnOp "!" rightNode)
+parseFactor lexState@(lex, token) = case token of
+  PLUS -> (factorLexState, UnOp "+" factorNode)
+  MINUS -> (factorLexState, UnOp "-" factorNode)
+  NOT -> (factorLexState, UnOp "!" factorNode)
   SCAN -> (parseFactorScan $ getNext lex, Scan)
   OPEN_PAR ->
-    if nextAfterOpen == CLOSE_PAR
-      then (getNext lexAfterOpen, exprNode) -- Consume CLOSE_PAR
-      else compilerParserError (lexAfterOpen, nextAfterOpen) "Expected CLOSE_PAR"
+    if expressionToken == CLOSE_PAR
+      then (getNext expressionLex, expressionNode) -- Consume CLOSE_PAR
+      else compilerParserError (expressionLex, expressionToken) "Expected CLOSE_PAR"
   INT val -> (nextLex, IntNode val)
   BOOLEAN val -> (nextLex, BoolNode val)
   STR val -> (nextLex, StringNode val)
   IDENTIFIER name -> (nextLex, Identifier name)
-  _ -> compilerParserError (lex, token) "Expected INT | BOOL | STR | IDENT"
+  _ -> compilerParserError lexState "Expected INT | BOOL | STR | IDENT"
   where
     nextLex = getNext lex
-    (afterLex, rightNode) = parseFactor nextLex
-    ((lexAfterOpen, nextAfterOpen), exprNode) = parseBoolExpression (getNext lex)
+    (factorLexState, factorNode) = parseFactor nextLex
+    ((expressionLex, expressionToken), expressionNode) = parseBoolExpression (getNext lex)
 
 parseFactorScan :: LexerState -> LexerState
-parseFactorScan (lex, token) = case token of
-  OPEN_PAR -> parseFactorClose nextScanner
-  _ -> compilerParserError scanner "Expected open par"
-  where
-    scanner = (lex, token)
-    (Lexer source position) = lex
-    nextScanner = getNext lex
+parseFactorScan lexState@(lex, token) = case token of
+  OPEN_PAR -> parseFactorClose $ getNext lex
+  _ -> compilerParserError lexState "Expected open par"
 
 parseFactorClose :: LexerState -> LexerState
-parseFactorClose (lex, token) = case token of
-  CLOSE_PAR -> nextScanner
-  _ -> compilerParserError scanner "Expected close par"
-  where
-    scanner = (lex, token)
-    (Lexer source position) = lex
-    nextScanner = getNext lex
+parseFactorClose lexState@(lex, token) = case token of
+  CLOSE_PAR -> getNext lex
+  _ -> compilerParserError lexState "Expected close par"

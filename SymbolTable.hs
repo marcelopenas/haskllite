@@ -30,11 +30,9 @@ getSymbol name table = case lookup name table of
   Nothing -> error $ "[Semantic] Undefined variable: " ++ name
 
 setSymbol :: Symbol -> SymbolTable -> SymbolTable
-setSymbol symbol table = case lookup name table of
+setSymbol symbol@(name, variable) table = case lookup name table of
   Just (_, True) -> error $ "[Semantic] tried redefining immutable variable: " ++ show name
   _ -> symbol : table
-  where
-    (name, variable) = symbol
 
 newSymbolTable :: SymbolTable
 newSymbolTable = []

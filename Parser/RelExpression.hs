@@ -8,20 +8,17 @@ import Semantic (Node (BinOp))
 import Token (Token (EQUAL, GREATER, LESSER))
 
 parseRelExpression :: Parser Node
-parseRelExpression (lex, token) = case token of
-  EQUAL -> compilerParserError lexerState "Expected RelExpression"
-  GREATER -> compilerParserError lexerState "Expected RelExpression"
-  LESSER -> compilerParserError lexerState "Expected RelExpression"
-  _ -> parseRelExpressionLoop nextLex leftNode
-  where
-    lexerState = (lex, token)
-    (nextLex, leftNode) = parseExpression lexerState
+parseRelExpression lexState@(lex, token) = case token of
+  EQUAL -> compilerParserError lexState "Expected RelExpression"
+  GREATER -> compilerParserError lexState "Expected RelExpression"
+  LESSER -> compilerParserError lexState "Expected RelExpression"
+  _ -> parseRelExpressionLoop `uncurry` parseExpression lexState
 
 parseRelExpressionLoop :: LexerState -> Node -> (LexerState, Node)
-parseRelExpressionLoop (lex, token) leftNode = case token of
-  EQUAL -> parseRelExpressionLoop nextLex (BinOp "==" leftNode rightNode)
-  GREATER -> parseRelExpressionLoop nextLex (BinOp ">" leftNode rightNode)
-  LESSER -> parseRelExpressionLoop nextLex (BinOp "<" leftNode rightNode)
-  _ -> ((lex, token), leftNode)
+parseRelExpressionLoop lexState@(lex, token) leftNode = case token of
+  EQUAL -> parseRelExpressionLoop expressionLex (BinOp "==" leftNode rightNode)
+  GREATER -> parseRelExpressionLoop expressionLex (BinOp ">" leftNode rightNode)
+  LESSER -> parseRelExpressionLoop expressionLex (BinOp "<" leftNode rightNode)
+  _ -> (lexState, leftNode)
   where
-    (nextLex, rightNode) = parseExpression (getNext lex)
+    (expressionLex, rightNode) = parseExpression (getNext lex)

@@ -18,8 +18,20 @@ isIdentifier c = isAlphaNum c || c == '_' || c == '!'
 insInt :: Char -> Bool
 insInt = isDigit
 
+getNextLex :: Lexer -> Lexer
+getNextLex (Lexer source position) = Lexer source (position + 1)
+
+getPrevLex :: Lexer -> Lexer
+getPrevLex (Lexer source position) = Lexer source (position - 1)
+
+getCharLex :: Lexer -> Char
+getCharLex (Lexer source position) = source !! position
+
+emptyBuilder :: String
+emptyBuilder = ""
+
 getNext :: Lexer -> (Lexer, Token)
-getNext (Lexer source position)
+getNext currentLex@(Lexer source position)
   | length source <= nextPos = (nextLex, EOF)
   | isSpace nextChar = getNext nextLex -- If space or \n continue
   | isAlpha nextChar = case identifierLexState of
@@ -66,29 +78,24 @@ getNext (Lexer source position)
       '\"' -> getNextParseString nextLex emptyBuilder
       _ -> compilerLexerError (nextPos, nextChar) "Invalid token at position"
   where
-    nextPos = position + 1
-    nextChar = source !! nextPos
-    nextLex = Lexer source nextPos
-
-    emptyBuilder = ""
-
-    nextNextPos = nextPos + 1
-    nextNextChar = source !! nextNextPos
-    nextNextLex = Lexer source nextNextPos
-
+    nextLex = getNextLex currentLex
+    nextChar = getCharLex nextLex
+    (Lexer _ nextPos) = nextLex
+    nextNextLex = getNextLex nextLex
+    nextNextChar = getCharLex nextNextLex
+    (Lexer _ nextNextPos) = nextNextLex
     identifierLexState = getNextParse nextLex (IDENTIFIER emptyBuilder) isIdentifier emptyBuilder
 
 getNextParseString :: Lexer -> String -> LexerState
-getNextParseString (Lexer source position) building = case nextChar of
+getNextParseString currentLex@(Lexer source position) building = case nextChar of
   '\"' -> (nextLex, STR $ reverse building)
   _ -> getNextParseString nextLex (nextChar : building)
   where
-    nextChar = source !! nextPos
-    nextPos = position + 1
-    nextLex = Lexer source nextPos
+    nextLex = getNextLex currentLex
+    nextChar = getCharLex nextLex
 
 getNextParse :: Lexer -> Token -> (Char -> Bool) -> String -> LexerState
-getNextParse (Lexer source position) token isIdentifier building = case token of
+getNextParse currentLex@(Lexer source position) token isIdentifier building = case token of
   IDENTIFIER _
     | position >= length source -> (currentLex, IDENTIFIER building)
     | isIdentifier currentChar -> getNextParse nextLex (IDENTIFIER "") isIdentifier (building ++ [currentChar])
@@ -98,8 +105,6 @@ getNextParse (Lexer source position) token isIdentifier building = case token of
     | isIdentifier currentChar -> getNextParse nextLex (INT 0) isIdentifier (building ++ [currentChar])
     | otherwise -> (prevLex, INT (read building :: Int))
   where
-    currentLex = Lexer source position
-    nextLex = Lexer source (position + 1)
-    prevLex = Lexer source (position - 1)
-
-    currentChar = source !! position
+    nextLex = getNextLex currentLex
+    prevLex = getPrevLex currentLex
+    currentChar = getCharLex currentLex

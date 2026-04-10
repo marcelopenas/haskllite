@@ -7,14 +7,12 @@ import Semantic (Node (BinOp))
 import Token (Token (DIV, MULT))
 
 parseTerm :: Parser Node
-parseTerm scanner = parseTermLoop nextLex leftNode
-  where
-    (nextLex, leftNode) = parseFactor scanner
+parseTerm scanner = parseTermLoop `uncurry` parseFactor scanner
 
 parseTermLoop :: LexerState -> Node -> (LexerState, Node)
-parseTermLoop (lex, token) leftNode = case token of
-  MULT -> parseTermLoop nextLex (BinOp "*" leftNode rightNode)
-  DIV -> parseTermLoop nextLex (BinOp "/" leftNode rightNode)
-  _ -> ((lex, token), leftNode)
+parseTermLoop lexState@(lex, token) leftNode = case token of
+  MULT -> parseTermLoop factorLex (BinOp "*" leftNode rightNode)
+  DIV -> parseTermLoop factorLex (BinOp "/" leftNode rightNode)
+  _ -> (lexState, leftNode)
   where
-    (nextLex, rightNode) = parseFactor $ getNext lex
+    (factorLex, rightNode) = parseFactor $ getNext lex
