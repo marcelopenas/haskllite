@@ -6,7 +6,7 @@ import CompilerError (compilerSemanticError)
 import Control.Monad (foldM)
 import Data.Bits (Bits (xor, (.&.), (.|.)))
 import GHC.IO (unsafePerformIO)
-import SymbolTable (Content (..), SymbolTable, getSymbol, setSymbol)
+import SymbolTable (Content (..), SymbolTable, createVariable, getSymbol, setSymbol)
 
 data Node
   = IntNode Int
@@ -20,6 +20,7 @@ data Node
   | If Node Node Node
   | While Node Node
   | Assignment String Node Bool -- Name Expression Immutable
+  | VarDec String Node Bool -- -- Name Expression Immutable
   | Block [Node]
   | NoOp
   deriving (Show)
@@ -27,14 +28,14 @@ data Node
 evaluate :: Node -> SymbolTable -> Content
 evaluate Scan st = IntContent $ unsafePerformIO (readLn :: IO Int) -- TODO cast other types depending on :
 evaluate (IntNode n) st = IntContent n
-evaluate (BoolNode n) st = IntContent $ fromEnum n
+evaluate (BoolNode n) st = BoolContent n
 evaluate (StringNode n) st = StringContent n
 evaluate (UnOp op a) st = case (op, a') of
   ("+", IntContent a') -> IntContent a'
   ("+", _) -> compilerSemanticError "Invalid operator UnOp + for non i32"
   ("-", IntContent a') -> IntContent $ -a'
   ("-", _) -> compilerSemanticError "Invalid operator UnOp - for non i32"
-  ("!", IntContent a') -> IntContent $ fromEnum $ not $ toEnum a'
+  ("!", IntContent a') -> BoolContent $ not $ toEnum a' -- ? Implicit cast?
   ("!", BoolContent a') -> BoolContent $ not a'
   ("!", _) -> compilerSemanticError "Invalid operator UnOp ! for non i32 | bool"
   where
@@ -77,6 +78,10 @@ execute :: Node -> SymbolTable -> IO SymbolTable
 execute (Print node) st = do
   print (evaluate node st)
   return st
+execute (VarDec name expr immutable) st = do
+  let !value = evaluate expr st
+  let !st' = createVariable (name, (value, immutable)) st
+  return st'
 execute (Assignment name expr immutable) st = do
   let !value = evaluate expr st
   let !st' = setSymbol (name, (value, immutable)) st

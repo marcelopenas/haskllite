@@ -5,8 +5,8 @@ import Lexer (Lexer (..), LexerState, getNext)
 import {-# SOURCE #-} Parser.Block (parseBlock)
 import Parser.BoolExpression (parseBoolExpression)
 import Parser.Parser (Parser)
-import Semantic (Node (Assignment, If, NoOp, Print, While))
-import Token (Token (ASSIGN, CLOSE_PAR, ELSE, END, IDENTIFIER, IF, LET, OPEN_PAR, PRINT, WHILE))
+import Semantic (Node (Assignment, If, NoOp, Print, While, VarDec))
+import Token (Token (ASSIGN, CLOSE_PAR, ELSE, END, IDENTIFIER, IF, LET, MUT, OPEN_PAR, PRINT, WHILE))
 
 parseStatement :: Parser Node
 parseStatement lexState@(lex, token) = case token of
@@ -36,8 +36,16 @@ parseStatementElse lexState@(lex, token) = case token of
 
 parseStatementLet :: Parser Node
 parseStatementLet lexState@(lex, token) = case token of
-  IDENTIFIER name -> parseStatementAssign name True $ getNext lex
+  MUT -> parseStatementMut $ getNext lex
+  IDENTIFIER name -> parseStatementDeclare name True $ getNext lex
   _ -> compilerParserError lexState "Expected identifier"
+
+parseStatementMut :: Parser Node
+parseStatementMut lexState@(lex, token) = case token of
+  IDENTIFIER name -> parseStatementDeclare name False $ getNext lex
+  _ -> compilerParserError lexState "Expected identifier"
+  where
+    (expressionLexState, newNode) = parseBoolExpression $ getNext lex
 
 parseStatementAssign :: String -> Bool -> Parser Node
 parseStatementAssign name immutable lexState@(lex, token) = case token of
@@ -45,6 +53,14 @@ parseStatementAssign name immutable lexState@(lex, token) = case token of
   _ -> compilerParserError lexState "Expected assignment"
   where
     (expressionLexState, newNode) = parseBoolExpression $ getNext lex
+
+parseStatementDeclare :: String -> Bool -> Parser Node
+parseStatementDeclare name immutable lexState@(lex, token) = case token of
+  ASSIGN -> (parseStatementEnd expressionLexState, VarDec name newNode immutable)
+  _ -> compilerParserError lexState "Expected declaration"
+  where
+    (expressionLexState, newNode) = parseBoolExpression $ getNext lex
+
 
 parseStatementEnd :: (Lexer, Token) -> (Lexer, Token)
 parseStatementEnd lexState@(lex, token) = case token of
