@@ -7,6 +7,7 @@ import Control.Monad (foldM)
 import Data.Bits (Bits (xor, (.&.), (.|.)))
 import GHC.IO (unsafePerformIO)
 import SymbolTable (Content (..), SymbolTable, createVariable, getSymbol, setSymbol)
+import Token (VarType)
 
 data Node
   = IntNode Int
@@ -20,7 +21,7 @@ data Node
   | If Node Node Node
   | While Node Node
   | Assignment String Node Bool -- Name Expression Immutable
-  | VarDec String Node Bool -- -- Name Expression Immutable
+  | VarDec String Node Bool VarType -- -- Name Expression Immutable Type
   | Block [Node]
   | NoOp
   deriving (Show)
@@ -78,13 +79,13 @@ execute :: Node -> SymbolTable -> IO SymbolTable
 execute (Print node) st = do
   print (evaluate node st)
   return st
-execute (VarDec name expr immutable) st = do
+execute (VarDec name expr immutable varType) st = do
   let !value = evaluate expr st
-  let !st' = createVariable (name, (value, immutable)) st
+  let !st' = createVariable (name, (value, immutable, varType)) st
   return st'
-execute (Assignment name expr immutable) st = do
+execute (Assignment name expr) st = do
   let !value = evaluate expr st
-  let !st' = setSymbol (name, (value, immutable)) st
+  let !st' = setSymbol (name, (value,)) st
   return st'
 execute (Block nodes) st = do
   foldM (flip execute) st (reverse nodes) -- Nodes will be right to left, thus reverse nodes
