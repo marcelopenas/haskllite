@@ -13,7 +13,12 @@ import Data.Data (Data (toConstr))
 import Data.List (find)
 import Token (VarType (BooleanT, I32T, StrT))
 
-data Content = IntContent Int | StringContent String | BoolContent Bool deriving (Data, Eq)
+data Content
+  = IntContent Int
+  | StringContent String
+  | BoolContent Bool
+  | NullContent
+  deriving (Data, Eq)
 
 instance Show Content where
   show :: Content -> String

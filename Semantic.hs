@@ -74,6 +74,7 @@ evaluate (BinOp op a b) st = case (op, a', b') of
     a' = evaluate a st
     b' = evaluate b st
 evaluate (Identifier name) st = getSymbol name st
+evaluate NoOp st = NullContent -- FIXME this should not be here, it is to fix a empty statement calling eval on noOp
 
 execute :: Node -> SymbolTable -> IO SymbolTable
 execute (Print node) st = do

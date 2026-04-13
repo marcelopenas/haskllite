@@ -71,7 +71,9 @@ parseStatementDeclareType name immutable lexState@(lex, token) = case token of
 parseStatementDeclare :: String -> Bool -> VarType -> Parser Node
 parseStatementDeclare name immutable varType lexState@(lex, token) = case token of
   ASSIGN -> (expressionLexState, VarDec name newNode immutable varType)
-  _ -> compilerParserError lexState "Expected declaration"
+  _
+    | immutable -> compilerParserError lexState "No assignment to immutable variable"
+    | otherwise -> (lexState, VarDec name NoOp immutable varType)
   where
     (expressionLexState, newNode) = parseBoolExpression $ getNext lex
 
