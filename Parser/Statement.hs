@@ -5,14 +5,14 @@ import Lexer (Lexer (..), LexerState, getNext)
 import {-# SOURCE #-} Parser.Block (parseBlock)
 import Parser.BoolExpression (parseBoolExpression)
 import Parser.Parser (Parser)
-import Semantic (Node (Assignment, If, NoOp, Print, While, VarDec))
-import Token (Token (ASSIGN, CLOSE_PAR, ELSE, END, IDENTIFIER, IF, LET, MUT, OPEN_PAR, PRINT, WHILE))
+import Semantic (Node (Assignment, If, NoOp, Print, VarDec, While))
+import Token (Token (ASSIGN, CLOSE_PAR, ELSE, END, IDENTIFIER, IF, LET, MUT, OPEN_PAR, PRINT, TYPE, TYPE_ASSIGN, WHILE), VarType)
 
 parseStatement :: Parser Node
 parseStatement lexState@(lex, token) = case token of
   END -> (nextLexState, NoOp)
   LET -> parseStatementLet nextLexState
-  IDENTIFIER name -> parseStatementAssign name False nextLexState
+  IDENTIFIER name -> parseStatementAssign name nextLexState
   PRINT -> (parseStatementEnd openParLexerState, Print openParNode)
   WHILE -> (statementLexState, While openParNode statementNode)
   IF ->
@@ -37,30 +37,43 @@ parseStatementElse lexState@(lex, token) = case token of
 parseStatementLet :: Parser Node
 parseStatementLet lexState@(lex, token) = case token of
   MUT -> parseStatementMut $ getNext lex
-  IDENTIFIER name -> parseStatementDeclare name True $ getNext lex
+  IDENTIFIER name -> parseStatementDeclareTypeAssign name True $ getNext lex
   _ -> compilerParserError lexState "Expected identifier"
 
 parseStatementMut :: Parser Node
 parseStatementMut lexState@(lex, token) = case token of
-  IDENTIFIER name -> parseStatementDeclare name False $ getNext lex
+  IDENTIFIER name -> parseStatementDeclareTypeAssign name False $ getNext lex
   _ -> compilerParserError lexState "Expected identifier"
   where
     (expressionLexState, newNode) = parseBoolExpression $ getNext lex
 
-parseStatementAssign :: String -> Bool -> Parser Node
-parseStatementAssign name immutable lexState@(lex, token) = case token of
-  ASSIGN -> (parseStatementEnd expressionLexState, Assignment name newNode immutable)
+parseStatementAssign :: String -> Parser Node
+parseStatementAssign name lexState@(lex, token) = case token of
+  ASSIGN -> (parseStatementEnd expressionLexState, Assignment name newNode)
   _ -> compilerParserError lexState "Expected assignment"
   where
     (expressionLexState, newNode) = parseBoolExpression $ getNext lex
 
-parseStatementDeclare :: String -> Bool -> Parser Node
-parseStatementDeclare name immutable lexState@(lex, token) = case token of
-  ASSIGN -> (parseStatementEnd expressionLexState, VarDec name newNode immutable)
+parseStatementDeclareTypeAssign :: String -> Bool -> Parser Node
+parseStatementDeclareTypeAssign name immutable lexState@(lex, token) = case token of
+  TYPE_ASSIGN -> (expressionLexState, newNode)
+  _ -> compilerParserError lexState "Expected :" -- to accept no :, call parseStatementDeclare with a new type as cast
+  where
+    (expressionLexState, newNode) = parseStatementDeclareType name immutable $ getNext lex
+
+parseStatementDeclareType :: String -> Bool -> Parser Node
+parseStatementDeclareType name immutable lexState@(lex, token) = case token of
+  TYPE varType ->
+    let (expressionLexState, newNode) = parseStatementDeclare name immutable varType $ getNext lex
+     in (parseStatementEnd expressionLexState, newNode)
+  _ -> compilerParserError lexState "Expected type"
+
+parseStatementDeclare :: String -> Bool -> VarType -> Parser Node
+parseStatementDeclare name immutable varType lexState@(lex, token) = case token of
+  ASSIGN -> (expressionLexState, VarDec name newNode immutable varType)
   _ -> compilerParserError lexState "Expected declaration"
   where
     (expressionLexState, newNode) = parseBoolExpression $ getNext lex
-
 
 parseStatementEnd :: (Lexer, Token) -> (Lexer, Token)
 parseStatementEnd lexState@(lex, token) = case token of

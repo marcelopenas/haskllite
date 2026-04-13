@@ -1,3 +1,3 @@
 let mut x : i32 = 1;
-x = 2;
+x = true;
 println!(x);

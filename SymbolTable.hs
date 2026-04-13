@@ -9,10 +9,11 @@ module SymbolTable
 where
 
 import CompilerError (compilerSemanticError)
+import Data.Data (Data (toConstr))
 import Data.List (find)
-import Token (VarType)
+import Token (VarType (BooleanT, I32T, StrT))
 
-data Content = IntContent Int | StringContent String | BoolContent Bool deriving (Eq)
+data Content = IntContent Int | StringContent String | BoolContent Bool deriving (Data, Eq)
 
 instance Show Content where
   show :: Content -> String
@@ -42,10 +43,19 @@ createVariable symbol@(name, variable, immutable, varType) table = case lookup4 
   Just (name, content, immutable, varType) -> compilerSemanticError $ "tried creating new variable with conflicting names: " ++ show name
   _ -> symbol : table
 
-setSymbol :: String -> Content -> SymbolTable -> SymbolTable
-setSymbol name content table = case lookup4 name table of
+typeMatch :: VarType -> Content -> Bool
+typeMatch I32T (IntContent _) = True
+typeMatch StrT (StringContent _) = True
+typeMatch BooleanT (BoolContent _) = True
+typeMatch _ _ = False
+
+setSymbol :: (String, Content) -> SymbolTable -> SymbolTable
+setSymbol (name, content) table = case lookup4 name table of
   Just (_, _, True, _) -> compilerSemanticError $ "tried redefining immutable variable: " ++ show name
-  Just (_, _, immutable, varType) -> (name, content, immutable, varType) : table
+  Just (name, _, immutable, varType) ->
+    if typeMatch varType content
+      then (name, content, immutable, varType) : table
+      else compilerSemanticError $ "could not assign type: " ++ show (toConstr content) ++ " to: " ++ show varType
   _ -> compilerSemanticError $ "tried assigning value to undeclared variable: " ++ show name
 
 newSymbolTable :: SymbolTable

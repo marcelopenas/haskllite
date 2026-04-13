@@ -20,7 +20,7 @@ data Node
   | Scan
   | If Node Node Node
   | While Node Node
-  | Assignment String Node Bool -- Name Expression Immutable
+  | Assignment String Node -- Name Expression Immutable
   | VarDec String Node Bool VarType -- -- Name Expression Immutable Type
   | Block [Node]
   | NoOp
@@ -81,11 +81,11 @@ execute (Print node) st = do
   return st
 execute (VarDec name expr immutable varType) st = do
   let !value = evaluate expr st
-  let !st' = createVariable (name, (value, immutable, varType)) st
+  let !st' = createVariable (name, value, immutable, varType) st
   return st'
 execute (Assignment name expr) st = do
   let !value = evaluate expr st
-  let !st' = setSymbol (name, (value,)) st
+  let !st' = setSymbol (name, value) st
   return st'
 execute (Block nodes) st = do
   foldM (flip execute) st (reverse nodes) -- Nodes will be right to left, thus reverse nodes
