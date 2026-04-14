@@ -9,6 +9,7 @@ import CompilerError (compilerSemanticError)
 import Control.Monad (foldM)
 import Data.Bits (Bits (xor, (.&.), (.|.)))
 import Data.Char (intToDigit)
+import Data.Unique (hashUnique, newUnique)
 import GHC.IO (unsafePerformIO)
 import SymbolTable (SymbolTable, Variable (..), createVariable, getSymbol, setSymbol)
 import Token (VarType)
@@ -285,9 +286,28 @@ generate (While evalNode execNode) st =
       ]
   )
   where
-    identifier = 1
+    identifier = hashUnique $ unsafePerformIO newUnique
     (evalSt, evalAsmCode) = generate evalNode st
     (st', execAsmCode) = generate execNode evalSt
+generate (If evalNode ifNode elseNode) st =
+  ( st'',
+    unlines
+      [ "; If-Else",
+        evalAsmCode,
+        "cmp eax, 0",
+        "je else_" ++ show identifier,
+        ifAsmCode,
+        "jmp exit_" ++ show identifier,
+        "else_" ++ show identifier ++ ":",
+        elseAsmCode,
+        "exit_" ++ show identifier ++ ":"
+      ]
+  )
+  where
+    identifier = hashUnique $ unsafePerformIO newUnique
+    (stEval, evalAsmCode) = generate evalNode st
+    (stIf, ifAsmCode) = generate ifNode stEval
+    (st'', elseAsmCode) = generate elseNode stIf
 
 isTrue :: Variable -> Bool
 isTrue value = case value of
