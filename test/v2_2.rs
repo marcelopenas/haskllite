@@ -1,3 +1,6 @@
-let x : i32;
-x = 42;
-println!(x);
+let mut x : str = "hello world";
+if (x) {
+    println!(x);
+} else {
+    println!("str falsy");
+}

@@ -5,6 +5,7 @@ module Semantic (evaluate, execute, Node (..)) where
 import CompilerError (compilerSemanticError)
 import Control.Monad (foldM)
 import Data.Bits (Bits (xor, (.&.), (.|.)))
+import Data.Data (Data (toConstr))
 import GHC.IO (unsafePerformIO)
 import SymbolTable (Content (..), SymbolTable, createVariable, getSymbol, setSymbol)
 import Token (VarType)
@@ -43,7 +44,8 @@ evaluate (UnOp op a) st = case (op, a') of
     a' = evaluate a st
 evaluate (BinOp op a b) st = case (op, a', b') of
   ("+", IntContent a', IntContent b') -> IntContent $ a' + b'
-  ("+", _, _) -> compilerSemanticError "Invalid operator BinOp + for non i32"
+  ("+", StringContent a', StringContent b') -> StringContent $ a' ++ b'
+  ("+", _, _) -> compilerSemanticError "Invalid operator BinOp + for non i32 | str"
   ("-", IntContent a', IntContent b') -> IntContent $ a' - b'
   ("-", _, _) -> compilerSemanticError "Invalid operator BinOp - for non i32"
   ("^", IntContent a', IntContent b') -> IntContent $ a' `xor` b'
@@ -92,7 +94,7 @@ execute (Block nodes) st = do
   foldM (flip execute) st (reverse nodes) -- Nodes will be right to left, thus reverse nodes
 execute (If evalNode ifNode elseNode) st = do
   let !value = evaluate evalNode st
-  if value == BoolContent True
+  if isTruthy value
     then do
       execute ifNode st
     else do
@@ -106,3 +108,12 @@ execute (While evalNode node) st = do
     else
       return st
 execute NoOp st = return st
+
+isTruthy :: Content -> Bool
+isTruthy value = case value of
+  BoolContent true -> True
+  IntContent 1 -> True
+  StringContent s
+    | length s > 1 -> True
+    | otherwise -> False
+  _ -> False
