@@ -74,9 +74,11 @@ evaluate (BinOp op a b) st = case (op, a', b') of
   (">", IntContent a', IntContent b') -> BoolContent $ a' > b'
   (">", BoolContent a', BoolContent b') -> BoolContent $ a' > b'
   (">", StringContent a', StringContent b') -> BoolContent $ a' > b'
+  (">", _, _) -> compilerSemanticError "Invalid operator BinOp > for non CMP"
   ("<", IntContent a', IntContent b') -> BoolContent $ a' < b'
   ("<", BoolContent a', BoolContent b') -> BoolContent $ a' < b'
   ("<", StringContent a', StringContent b') -> BoolContent $ a' < b'
+  ("<", _, _) -> compilerSemanticError "Invalid operator BinOp < for non CMP"
   ("&&", IntContent a', IntContent b') -> BoolContent $ abs a' .&. abs b' >= 1
   ("&&", BoolContent a', BoolContent b') -> BoolContent $ a' && b'
   ("&&", _, _) -> compilerSemanticError "Invalid operator BinOp && for non i32 | bool"
@@ -91,7 +93,8 @@ evaluate NoOp st = NullContent -- FIXME this should not be here, it is to fix a 
 
 execute :: Node -> SymbolTable -> IO SymbolTable
 execute (Print node) st = do
-  print (evaluate node st)
+  let node' = evaluate node st
+  print node'
   return st
 execute (VarDec name expr immutable varType) st = do
   let !value = evaluate expr st

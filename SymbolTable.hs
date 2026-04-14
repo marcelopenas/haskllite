@@ -24,8 +24,8 @@ instance Show Content where
   show :: Content -> String
   show (IntContent s) = show s
   show (StringContent s) = s
-  show (BoolContent True) = "True"
-  show (BoolContent False) = "False"
+  show (BoolContent True) = "true"
+  show (BoolContent False) = "false"
 
 type Variable = Content
 
