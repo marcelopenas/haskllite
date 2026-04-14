@@ -4,3 +4,7 @@ while (x == 42) {
     println!(x);
     x = 1;
 }
+while (x == 42) {
+    println!(x);
+    x = 1;
+}

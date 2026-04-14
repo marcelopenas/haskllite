@@ -150,6 +150,23 @@ pattern ValidEq <-
       True
     )
 
+pattern ValidMul :: (Node, Node)
+pattern ValidMul <- ValidEq
+
+pattern ValidRelOp :: (Node, Node)
+pattern ValidRelOp <- ValidEq
+
+pattern ValidBoolOp :: (Node, Node)
+pattern ValidBoolOp <-
+  ( \case
+      (BoolNode a, BoolNode b) -> True
+      (Identifier a, BoolNode b) -> True
+      (BoolNode a, Identifier b) -> True
+      (Identifier a, Identifier b) -> True
+      _ -> True ->
+      True
+    )
+
 pattern ValidNeg :: Node
 pattern ValidNeg <-
   ( \case
@@ -187,7 +204,18 @@ generate (BinOp op a b) st =
               "pop ecx",
               "add eax, ecx"
             ]
-        _ -> compilerSemanticError "Invalid operator BinOp + for non i32 | str"
+        _ -> compilerSemanticError "Invalid operator BinOp + for non i32"
+      "*" -> case (a, b) of
+        ValidMul ->
+          unlines
+            [ "; BinOp *",
+              snd $ generate b st,
+              "push eax",
+              snd $ generate a st,
+              "pop ecx",
+              "imul eax, ecx"
+            ]
+        _ -> compilerSemanticError "Invalid operator BinOp * for non i32"
       "==" -> case (a, b) of
         ValidEq ->
           unlines
@@ -201,7 +229,47 @@ generate (BinOp op a b) st =
               "mov eax, 0",
               "cmove eax, ecx"
             ]
-        _ -> compilerSemanticError "Invalid operator BinOp + for non i32 | str"
+        _ -> compilerSemanticError "Invalid operator BinOp == for non i32"
+      "||" -> case (a, b) of
+        ValidBoolOp ->
+          unlines
+            [ "; BinOp ||",
+              snd $ generate b st,
+              "push eax",
+              snd $ generate a st,
+              "pop ecx",
+              "or eax, ecx"
+            ]
+        _ -> compilerSemanticError "Invalid operator BinOp || for non-boolean"
+      ">" -> case (a, b) of
+        ValidRelOp ->
+          unlines
+            [ "; BinOp >",
+              snd $ generate b st,
+              "push eax",
+              snd $ generate a st,
+              "pop ecx",
+              "cmp eax, ecx",
+              "mov ecx, 1",
+              "mov eax, 0",
+              "cmovg eax, ecx"
+            ]
+        _ -> compilerSemanticError "Invalid operator BinOp > for non i32"
+      "<" -> case (a, b) of
+        ValidRelOp ->
+          unlines
+            [ "; BinOp <",
+              snd $ generate b st,
+              "push eax",
+              snd $ generate a st,
+              "pop ecx",
+              "cmp eax, ecx",
+              "mov ecx, 1",
+              "mov eax, 0",
+              "cmovl eax, ecx"
+            ]
+        _ -> compilerSemanticError "Invalid operator BinOp < for non i32"
+      _ -> compilerSemanticError $ "Unknown binary operator: " ++ op
   )
 generate (IntNode val) st =
   ( st,

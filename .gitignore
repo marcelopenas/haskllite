@@ -1,3 +1,12 @@
+# Ignore all
+*
+# Unignore all with extensions
+!*.*
+# Unignore all dirs
+!*/
+# Exclude compilation artifacts
+*.asm
+
 dist
 dist-*
 cabal-dev
@@ -27,3 +36,4 @@ main
 main.exe
 
 haskllite
+
