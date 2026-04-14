@@ -46,7 +46,9 @@ getSymbol name table = case lookup4 name table of
 createVariable :: Symbol -> SymbolTable -> SymbolTable
 createVariable symbol@(name, variable, immutable, varType) table = case lookup4 name table of
   Just (name, content, immutable, varType) -> compilerSemanticError $ "tried creating new variable with conflicting names: " ++ show name
-  _ -> symbol : table
+  _
+    | typeMatch varType variable -> symbol : table
+    | otherwise -> compilerSemanticError $ "tried assigning variable " ++ show name ++ " to invalid type, is: " ++ show varType ++ " tried: " ++ show (toConstr variable)
 
 typeMatch :: VarType -> Content -> Bool
 typeMatch I32T (IntContent _) = True
