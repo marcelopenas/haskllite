@@ -1,6 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 
-module Semantic (evaluate, execute, Node (..)) where
+module Semantic (evaluate, execute, generate, Node (..)) where
 
 import CompilerError (compilerSemanticError)
 import Control.Monad (foldM)
@@ -123,6 +123,42 @@ execute (While evalNode node) st = do
     else
       return st
 execute NoOp st = return st
+
+generate :: Node -> SymbolTable -> (SymbolTable, String)
+generate NoOp st = (st, "")
+generate (IntNode val) st = (st, unlines ["mov eax, " ++ show val])
+-- generate (Assignment name expr) st = (st', asmSource')
+--   where
+--     (stE, asmSourceE) = generate expr st
+-- generate (VarDec name expr immutable varType) st = (st', asmSource')
+--   where
+--     stC = createVariable (name, evaluate expr st, immutable, varType) st
+--     (st', asmSource) = generate expr stC
+--     asmSource' =
+--       unlines
+--         [ "sub esp, 4"
+--         ] ++ asmSource
+generate (Print node) st = (st, asmCode)
+  where
+    (nodeSt, nodeAsmCode) = generate node st
+    asmCode =
+      nodeAsmCode
+        ++ unlines
+          [ "push eax",
+            "push format_out",
+            "call printf",
+            "add esp, 8"
+          ]
+generate (Block nodes) st = (st', asmCodes)
+  where
+    (st', asmCodes) =
+      foldl
+        ( \(stAcc, asmAcc) node ->
+            let (stNext, asmNext) = generate node stAcc
+             in (stNext, asmAcc ++ asmNext ++ "\n")
+        )
+        (st, "")
+        nodes
 
 isTrue :: Content -> Bool
 isTrue value = case value of
