@@ -54,6 +54,7 @@ typeMatch :: VarType -> Content -> Bool
 typeMatch I32T (IntContent _) = True
 typeMatch StrT (StringContent _) = True
 typeMatch BooleanT (BoolContent _) = True
+typeMatch _ NullContent = True
 typeMatch _ _ = False
 
 setSymbol :: (String, Content) -> SymbolTable -> SymbolTable
