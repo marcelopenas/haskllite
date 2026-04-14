@@ -45,7 +45,7 @@ evaluate (UnOp op a) st = case (op, a') of
 evaluate (BinOp op a b) st = case (op, a', b') of
   ("+", IntContent a', IntContent b') -> IntContent $ a' + b'
   ("+", StringContent a', StringContent b') -> StringContent $ a' ++ b'
-  ("+", StringContent a', IntContent b') -> StringContent $ reverse $ intToDigit b' : a'
+  ("+", StringContent a', IntContent b') -> StringContent $ reverse $ intToDigit b' : reverse a'
   ("+", IntContent a', StringContent b') -> StringContent $ intToDigit a' : b'
   ("+", StringContent a', BoolContent True) -> StringContent $ a' ++ "true"
   ("+", StringContent a', BoolContent False) -> StringContent $ a' ++ "false"
