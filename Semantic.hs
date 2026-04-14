@@ -70,6 +70,7 @@ evaluate (BinOp op a b) st = case (op, a', b') of
   ("==", IntContent a', IntContent b') -> BoolContent $ a' == b'
   ("==", BoolContent a', BoolContent b') -> BoolContent $ a' == b'
   ("==", StringContent a', StringContent b') -> BoolContent $ a' == b'
+  ("==", _, _) -> compilerSemanticError "Invalid operator BinOp == for non CMP"
   (">", IntContent a', IntContent b') -> BoolContent $ a' > b'
   (">", BoolContent a', BoolContent b') -> BoolContent $ a' > b'
   (">", StringContent a', StringContent b') -> BoolContent $ a' > b'
