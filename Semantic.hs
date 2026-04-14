@@ -37,7 +37,7 @@ evaluate (UnOp op a) st = case (op, a') of
   ("+", _) -> compilerSemanticError "Invalid operator UnOp + for non i32"
   ("-", IntContent a') -> IntContent $ -a'
   ("-", _) -> compilerSemanticError "Invalid operator UnOp - for non i32"
-  ("!", IntContent a') -> BoolContent $ not $ toEnum a' -- ? Implicit cast?
+  ("!", IntContent a') -> IntContent $ fromEnum $ not $ toEnum a'
   ("!", BoolContent a') -> BoolContent $ not a'
   ("!", _) -> compilerSemanticError "Invalid operator UnOp ! for non i32 | bool"
   where
@@ -126,9 +126,17 @@ execute NoOp st = return st
 
 isTruthy :: Content -> Bool
 isTruthy value = case value of
+  BoolContent True -> True
+  BoolContent False -> False
+  _ -> compilerSemanticError "Invalid incompatible type for boolean-y value"
+
+{-
+isTruthy :: Content -> Bool
+isTruthy value = case value of
   BoolContent true -> True
   IntContent 1 -> True
   StringContent s
     | length s > 1 -> True
     | otherwise -> False
   _ -> False
+ -}
