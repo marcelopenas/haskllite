@@ -59,9 +59,13 @@ evaluate (BinOp op a b) st = case (op, a', b') of
   ("^", _', _) -> compilerSemanticError "Invalid operator BinOp - for non i32 | bool"
   ("*", IntContent a', IntContent b') -> IntContent $ a' * b'
   ("*", _, _) -> compilerSemanticError "Invalid operator BinOp * for non i32"
-  ("**", IntContent a', IntContent b') -> IntContent $ if b' > 0 then a' ^ b' else compilerSemanticError "Negative exponent not supported"
+  ("**", IntContent a', IntContent b')
+    | b' <= 0 -> compilerSemanticError "Negative exponent not supported"
+    | otherwise -> IntContent $ a' ^ b'
   ("**", _, _) -> compilerSemanticError "Invalid operator BinOp * for non i32"
-  ("/", IntContent a', IntContent b') -> IntContent $ if b' > 0 then a' `div` b' else compilerSemanticError "Division by zero"
+  ("/", IntContent a', IntContent b')
+    | b' == 0 -> compilerSemanticError "Division by zero"
+    | otherwise -> IntContent $ a' `div` b'
   ("/", _, _) -> compilerSemanticError "Invalid operator BinOp * for non i32"
   ("==", IntContent a', IntContent b') -> BoolContent $ a' == b'
   ("==", BoolContent a', BoolContent b') -> BoolContent $ a' == b'
@@ -97,7 +101,8 @@ execute (Assignment name expr) st = do
   let !st' = setSymbol (name, value) st
   return st'
 execute (Block nodes) st = do
-  foldM (flip execute) st (reverse nodes) -- Nodes will be right to left, thus reverse nodes
+  !st' <- foldM (flip execute) st (reverse nodes) -- Nodes will be right to left, thus reverse nodes
+  return st'
 execute (If evalNode ifNode elseNode) st = do
   let !value = evaluate evalNode st
   if isTruthy value

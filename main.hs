@@ -1,3 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
+
 import Parser.Run (run)
 import PreProcess (preProcess)
 import Semantic (execute)
