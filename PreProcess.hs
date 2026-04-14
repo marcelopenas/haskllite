@@ -3,6 +3,7 @@ module PreProcess
   )
 where
 
+import CompilerError (compilerLexerError)
 import Data.List (findIndex, isPrefixOf, stripPrefix, tails)
 import Data.Text (Text, pack, replace, unpack)
 
@@ -63,7 +64,7 @@ getConstantOccurrence constants source constIndex = (constant : constants, modif
 
     getConstName :: Int -> String -> String -> (String, Int)
     getConstName currentIndex source buildingString = case currentChar of
-      ';' -> error "[Lexer] Incomplete define statement"
+      ';' -> compilerLexerError (currentIndex, currentChar) "Incomplete define statement"
       ' ' -> (reverse buildingString, currentIndex)
       _ -> getConstName (currentIndex + 1) source (currentChar : buildingString)
       where
