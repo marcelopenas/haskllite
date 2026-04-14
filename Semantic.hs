@@ -109,14 +109,14 @@ execute (Block nodes) st = do
   return st'
 execute (If evalNode ifNode elseNode) st = do
   let !value = evaluate evalNode st
-  if isTruthy value
+  if isTrue value
     then do
       execute ifNode st
     else do
       execute elseNode st
 execute (While evalNode node) st = do
   let !value = evaluate evalNode st
-  if isTruthy value
+  if isTrue value
     then do
       !nextSt <- execute node st
       execute (While evalNode node) nextSt
@@ -124,19 +124,8 @@ execute (While evalNode node) st = do
       return st
 execute NoOp st = return st
 
-isTruthy :: Content -> Bool
-isTruthy value = case value of
+isTrue :: Content -> Bool
+isTrue value = case value of
   BoolContent True -> True
   BoolContent False -> False
-  _ -> compilerSemanticError "Invalid incompatible type for boolean-y value"
-
-{-
-isTruthy :: Content -> Bool
-isTruthy value = case value of
-  BoolContent true -> True
-  IntContent 1 -> True
-  StringContent s
-    | length s > 1 -> True
-    | otherwise -> False
-  _ -> False
- -}
+  _ -> compilerSemanticError "Invalid type for condition, expected boolean value"
