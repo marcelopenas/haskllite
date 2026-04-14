@@ -25,7 +25,9 @@ getPrevLex :: Lexer -> Lexer
 getPrevLex (Lexer source position) = Lexer source (position - 1)
 
 getCharLex :: Lexer -> Char
-getCharLex (Lexer source position) = source !! position
+getCharLex (Lexer source position)
+  | position < length source = source !! position
+  | otherwise = compilerLexerError (position, source !! (position - 1)) "getChar beyond source"
 
 emptyBuilder :: String
 emptyBuilder = ""
@@ -89,7 +91,9 @@ getNext currentLex@(Lexer source position)
 getNextParseString :: Lexer -> String -> LexerState
 getNextParseString currentLex@(Lexer source position) building = case nextChar of
   '\"' -> (nextLex, STR $ reverse building)
-  _ -> getNextParseString nextLex (nextChar : building)
+  _
+    | (position + 1) < length source -> getNextParseString nextLex (nextChar : building)
+    | otherwise -> compilerLexerError (position, source !! (position - 1)) "EOL on string" -- FIXME this never happens, why???
   where
     nextLex = getNextLex currentLex
     nextChar = getCharLex nextLex
