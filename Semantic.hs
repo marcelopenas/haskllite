@@ -5,7 +5,7 @@ module Semantic (evaluate, execute, Node (..)) where
 import CompilerError (compilerSemanticError)
 import Control.Monad (foldM)
 import Data.Bits (Bits (xor, (.&.), (.|.)))
-import Data.Data (Data (toConstr))
+import Data.Char (intToDigit)
 import GHC.IO (unsafePerformIO)
 import SymbolTable (Content (..), SymbolTable, createVariable, getSymbol, setSymbol)
 import Token (VarType)
@@ -45,6 +45,12 @@ evaluate (UnOp op a) st = case (op, a') of
 evaluate (BinOp op a b) st = case (op, a', b') of
   ("+", IntContent a', IntContent b') -> IntContent $ a' + b'
   ("+", StringContent a', StringContent b') -> StringContent $ a' ++ b'
+  ("+", StringContent a', IntContent b') -> StringContent $ reverse $ intToDigit b' : a'
+  ("+", IntContent a', StringContent b') -> StringContent $ intToDigit a' : b'
+  ("+", StringContent a', BoolContent True) -> StringContent $ a' ++ "true"
+  ("+", StringContent a', BoolContent False) -> StringContent $ a' ++ "false"
+  ("+", BoolContent True, StringContent b') -> StringContent $ "true" ++ b'
+  ("+", BoolContent False, StringContent b') -> StringContent $ "false" ++ b'
   ("+", _, _) -> compilerSemanticError "Invalid operator BinOp + for non i32 | str"
   ("-", IntContent a', IntContent b') -> IntContent $ a' - b'
   ("-", _, _) -> compilerSemanticError "Invalid operator BinOp - for non i32"
