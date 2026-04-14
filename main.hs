@@ -46,11 +46,11 @@ formatAsmCode asmCode =
     ++ asmCode
     ++ unlines
       [ "",
-        "mov esp, ebp ; re-establish stack",
-        "pop ebp",
+        "  mov esp, ebp ; re-establish stack",
+        "  pop ebp",
         "",
         "; exit",
-        "mov eax, 1",
-        "xor ebx, ebx",
-        "int 0x80"
+        "  mov eax, 1",
+        "  xor ebx, ebx",
+        "  int 0x80"
       ]

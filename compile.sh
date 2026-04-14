@@ -7,8 +7,8 @@ name="${filename%.*}"
 obj_file="$name.o"
 asm_file="$name.asm"
 
-runghc main.hs "$file_path"
-nasm -f elf32 -o "$obj_file" "$asm_file"
+runghc main.hs "$file_path" && \
+nasm -f elf32 -o "$obj_file" "$asm_file" && \
 gcc -m32 -no-pie -nostartfiles -o "$name" "$name".o -e _start
 
 # Cleanup

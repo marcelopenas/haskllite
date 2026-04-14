@@ -1,4 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Semantic (evaluate, execute, generate, Node (..)) where
 
@@ -7,7 +10,7 @@ import Control.Monad (foldM)
 import Data.Bits (Bits (xor, (.&.), (.|.)))
 import Data.Char (intToDigit)
 import GHC.IO (unsafePerformIO)
-import SymbolTable (Content (..), SymbolTable, createVariable, getSymbol, setSymbol)
+import SymbolTable (SymbolTable, Variable (..), createVariable, getSymbol, setSymbol)
 import Token (VarType)
 
 data Node
@@ -27,7 +30,7 @@ data Node
   | NoOp
   deriving (Show)
 
-evaluate :: Node -> SymbolTable -> Content
+evaluate :: Node -> SymbolTable -> Variable
 evaluate Scan st = IntContent $ unsafePerformIO (readLn :: IO Int) -- TODO cast other types depending on :
 evaluate (IntNode n) st = IntContent n
 evaluate (BoolNode n) st = BoolContent n
@@ -124,31 +127,140 @@ execute (While evalNode node) st = do
       return st
 execute NoOp st = return st
 
+pattern ValidSum :: (Node, Node)
+pattern ValidSum <-
+  ( \case
+      (IntNode a, IntNode b) -> True
+      (Identifier a, IntNode b) -> True
+      (IntNode a, Identifier b) -> True
+      (Identifier a, Identifier b) -> True
+      _ -> False ->
+      True
+    )
+
+pattern ValidEq :: (Node, Node)
+pattern ValidEq <-
+  ( \case
+      (IntNode a, IntNode b) -> True
+      (Identifier a, IntNode b) -> True
+      (IntNode a, Identifier b) -> True
+      (Identifier a, Identifier b) -> True
+      _ -> False ->
+      True
+    )
+
+pattern ValidNeg :: Node
+pattern ValidNeg <-
+  ( \case
+      (IntNode a) -> True
+      (Identifier a) -> True
+      _ -> False ->
+      True
+    )
+
 generate :: Node -> SymbolTable -> (SymbolTable, String)
-generate NoOp st = (st, "")
-generate (IntNode val) st = (st, unlines ["mov eax, " ++ show val])
--- generate (Assignment name expr) st = (st', asmSource')
---   where
---     (stE, asmSourceE) = generate expr st
--- generate (VarDec name expr immutable varType) st = (st', asmSource')
---   where
---     stC = createVariable (name, evaluate expr st, immutable, varType) st
---     (st', asmSource) = generate expr stC
---     asmSource' =
---       unlines
---         [ "sub esp, 4"
---         ] ++ asmSource
-generate (Print node) st = (st, asmCode)
+generate NoOp st = (st, "; NoOp")
+generate (UnOp op a) st =
+  ( st,
+    case op of
+      "+" -> "; UnOp +"
+      "-" -> case a of
+        ValidNeg ->
+          unlines
+            [ "; UnOp -",
+              snd $ generate a st,
+              "neg eax"
+            ]
+        _ -> compilerSemanticError "Invalid operator BinOp + for non i32 | str"
+  )
+generate (BinOp op a b) st =
+  ( st,
+    case op of
+      "+" -> case (a, b) of
+        ValidSum ->
+          unlines
+            [ "; BinOp +",
+              snd $ generate b st,
+              "push eax",
+              snd $ generate a st,
+              "pop ecx",
+              "add eax, ecx"
+            ]
+        _ -> compilerSemanticError "Invalid operator BinOp + for non i32 | str"
+      "==" -> case (a, b) of
+        ValidEq ->
+          unlines
+            [ "; BinOp +",
+              snd $ generate b st,
+              "push eax",
+              snd $ generate a st,
+              "pop ecx",
+              "cmp eax, ecx",
+              "mov ecx, 1",
+              "mov eax, 0",
+              "cmove eax, ecx"
+            ]
+        _ -> compilerSemanticError "Invalid operator BinOp + for non i32 | str"
+  )
+generate (IntNode val) st =
+  ( st,
+    unlines
+      [ "; IntNode",
+        "mov eax, " ++ show val
+      ]
+  )
+generate (Identifier name) st = (st, asmCode)
   where
-    (nodeSt, nodeAsmCode) = generate node st
+    value = getSymbol name st
+    asmCode =
+      unlines
+        [ "; Identifier",
+          "mov eax, [ebp-4]"
+        ]
+generate (VarDec name expr immutable varType) st = (st', asmSource')
+  where
+    stC = createVariable (name, NullContent, immutable, varType) st
+    (st', asmSource) = generate expr stC
+    asmSource' =
+      unlines
+        [ "; Declaration",
+          "sub esp, 4",
+          asmSource,
+          snd $ generate (Assignment name expr) st' -- Discards new st as it will be the equivalent to the original
+        ] -- FIXME when accessing unassigned val, returns leftover data
+generate (Assignment name expr) st = (st', asmSource')
+  where
+    (st', asmSourceE) = generate expr st
+    asmSource' =
+      unlines
+        [ "; Assignment",
+          asmSourceE,
+          "mov [ebp-4], eax"
+        ]
+generate (Print node) st = (st', asmCode)
+  where
+    (st', nodeAsmCode) = generate node st
     asmCode =
       nodeAsmCode
+        ++ "\n"
         ++ unlines
-          [ "push eax",
+          [ "; Print",
+            "push eax",
             "push format_out",
             "call printf",
             "add esp, 8"
           ]
+generate Scan st = (st, asmCode)
+  where
+    asmCode =
+      unlines
+        [ "; Scanln",
+          "push scan_int",
+          "push format_in",
+          "call scanf",
+          "add esp, 8",
+          "mov eax, dword [scan_int]"
+        ]
 generate (Block nodes) st = (st', asmCodes)
   where
     (st', asmCodes) =
@@ -158,9 +270,26 @@ generate (Block nodes) st = (st', asmCodes)
              in (stNext, asmAcc ++ asmNext ++ "\n")
         )
         (st, "")
-        nodes
+        (reverse nodes)
+generate (While evalNode execNode) st =
+  ( st',
+    unlines
+      [ "; While",
+        "loop_" ++ show identifier ++ ":",
+        evalAsmCode,
+        "cmp eax, 0",
+        "je exit_" ++ show identifier,
+        execAsmCode,
+        "jmp loop_" ++ show identifier,
+        "exit_" ++ show identifier ++ ":"
+      ]
+  )
+  where
+    identifier = 1
+    (evalSt, evalAsmCode) = generate evalNode st
+    (st', execAsmCode) = generate execNode evalSt
 
-isTrue :: Content -> Bool
+isTrue :: Variable -> Bool
 isTrue value = case value of
   BoolContent True -> True
   BoolContent False -> False

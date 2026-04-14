@@ -4,7 +4,7 @@ module SymbolTable
     setSymbol,
     createVariable,
     newSymbolTable,
-    Content (..),
+    Variable (..),
   )
 where
 
@@ -13,21 +13,20 @@ import Data.Data (Data (toConstr))
 import Data.List (find)
 import Token (VarType (BooleanT, I32T, StrT))
 
-data Content
+data Variable
   = IntContent Int
   | StringContent String
   | BoolContent Bool
   | NullContent
   deriving (Data, Eq)
 
-instance Show Content where
-  show :: Content -> String
+instance Show Variable where
+  show :: Variable -> String
   show (IntContent s) = show s
   show (StringContent s) = s
   show (BoolContent True) = "true"
   show (BoolContent False) = "false"
-
-type Variable = Content
+  show NullContent = ""
 
 type Immutable = Bool
 
@@ -38,7 +37,7 @@ type SymbolTable = [Symbol]
 lookup4 :: (Eq a) => a -> [(a, b, c, d)] -> Maybe (a, b, c, d)
 lookup4 key = find (\(k, _, _, _) -> k == key)
 
-getSymbol :: String -> SymbolTable -> Content
+getSymbol :: String -> SymbolTable -> Variable
 getSymbol name table = case lookup4 name table of
   Just (_, content, _, _) -> content
   Nothing -> compilerSemanticError $ "Undefined variable: " ++ name
@@ -50,14 +49,14 @@ createVariable symbol@(name, variable, immutable, varType) table = case lookup4 
     | typeMatch varType variable -> symbol : table
     | otherwise -> compilerSemanticError $ "tried assigning variable " ++ show name ++ " to invalid type, is: " ++ show varType ++ " tried: " ++ show (toConstr variable)
 
-typeMatch :: VarType -> Content -> Bool
+typeMatch :: VarType -> Variable -> Bool
 typeMatch I32T (IntContent _) = True
 typeMatch StrT (StringContent _) = True
 typeMatch BooleanT (BoolContent _) = True
 typeMatch _ NullContent = True
 typeMatch _ _ = False
 
-setSymbol :: (String, Content) -> SymbolTable -> SymbolTable
+setSymbol :: (String, Variable) -> SymbolTable -> SymbolTable
 setSymbol (name, content) table = case lookup4 name table of
   Just (_, _, True, _) -> compilerSemanticError $ "tried redefining immutable variable: " ++ show name
   Just (name, _, immutable, varType) ->
