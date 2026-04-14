@@ -116,7 +116,7 @@ execute (If evalNode ifNode elseNode) st = do
       execute elseNode st
 execute (While evalNode node) st = do
   let !value = evaluate evalNode st
-  if value == BoolContent True
+  if isTruthy value
     then do
       !nextSt <- execute node st
       execute (While evalNode node) nextSt
