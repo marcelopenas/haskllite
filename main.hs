@@ -5,7 +5,7 @@ import PreProcess (preProcess)
 import Semantic (execute, generate)
 import SymbolTable (newSymbolTable)
 import System.Environment (getArgs)
-import System.FilePath (takeBaseName, takeExtension)
+import System.FilePath (takeBaseName, takeDirectory, takeExtension)
 
 main :: IO ()
 main = do
@@ -21,7 +21,7 @@ main = do
           -- !st <- execute (run $ preProcess compilerInput ++ "\n") newSymbolTable
           let !(st, asmCode) = generate (run $ preProcess compilerInput ++ "\n") newSymbolTable
           -- writeFile (takeBaseName filePath ++ ".asm") (formatAsmCode $ unlines $ map ("  " ++) asmCode)
-          writeFile (takeBaseName filePath ++ ".asm") (formatAsmCode $ unlines asmCode)
+          writeFile (takeDirectory filePath ++ "/" ++ (takeBaseName filePath ++ ".asm")) (formatAsmCode $ unlines asmCode)
           return ()
 
 -- TODO use multiline string literals instead of function that is runtime
