@@ -135,6 +135,17 @@ pattern ValidSum <-
       (Identifier a, IntNode b) -> True
       (IntNode a, Identifier b) -> True
       (Identifier a, Identifier b) -> True
+      -- (IntNode a, _) -> True
+      (IntNode a, UnOp {}) -> True
+      (UnOp {}, IntNode b) -> True
+      (Identifier a, UnOp {}) -> True
+      (UnOp {}, Identifier b) -> True
+      (UnOp {}, UnOp {}) -> True
+      (IntNode a, BinOp {}) -> True
+      (BinOp {}, IntNode b) -> True
+      (Identifier a, BinOp {}) -> True
+      (BinOp {}, Identifier b) -> True
+      (BinOp {}, BinOp {}) -> True
       _ -> False ->
       True
     )
@@ -151,7 +162,10 @@ pattern ValidEq <-
     )
 
 pattern ValidMul :: (Node, Node)
-pattern ValidMul <- ValidEq
+pattern ValidMul <- ValidSum
+
+pattern ValidDiv :: (Node, Node)
+pattern ValidDiv <- ValidSum
 
 pattern ValidRelOp :: (Node, Node)
 pattern ValidRelOp <- ValidEq
@@ -177,6 +191,20 @@ pattern ValidNeg <-
     )
 
 generate :: Node -> SymbolTable -> (SymbolTable, String)
+generate (IntNode val) st =
+  ( st,
+    unlines
+      [ "; IntNode",
+        "mov eax, " ++ show val
+      ]
+  )
+generate (StringNode val) st =
+  ( st,
+    unlines
+      [ "; StringNode",
+        "mov eax, " ++ show val
+      ]
+  )
 generate NoOp st = (st, "; NoOp")
 generate (UnOp op a) st =
   ( st,
@@ -189,7 +217,13 @@ generate (UnOp op a) st =
               snd $ generate a st,
               "neg eax"
             ]
-        _ -> compilerSemanticError "Invalid operator BinOp + for non i32 | str"
+        _ -> compilerSemanticError "Invalid operator BinOp - for non i32 | str"
+      "!" ->
+        unlines
+          [ "; UnOp !",
+            snd $ generate a st,
+            "xor eax, 1"
+          ]
   )
 generate (BinOp op a b) st =
   ( st,
@@ -205,6 +239,17 @@ generate (BinOp op a b) st =
               "add eax, ecx"
             ]
         _ -> compilerSemanticError "Invalid operator BinOp + for non i32"
+      "-" -> case (a, b) of
+        ValidSum ->
+          unlines
+            [ "; BinOp +",
+              snd $ generate b st,
+              "push eax",
+              snd $ generate a st,
+              "pop ecx",
+              "sub eax, ecx"
+            ]
+        _ -> compilerSemanticError "Invalid operator BinOp - for non i32"
       "*" -> case (a, b) of
         ValidMul ->
           unlines
@@ -216,6 +261,19 @@ generate (BinOp op a b) st =
               "imul eax, ecx"
             ]
         _ -> compilerSemanticError "Invalid operator BinOp * for non i32"
+      "/" -> case (a, b) of
+        (IntNode _, IntNode 0) -> compilerSemanticError "Division by zero literal in BinOp /"
+        ValidDiv ->
+          unlines
+            [ "; BinOp /",
+              snd $ generate b st,
+              "push eax",
+              snd $ generate a st,
+              "pop ecx",
+              "cdq",
+              "idiv ecx"
+            ]
+        _ -> compilerSemanticError "Invalid operator BinOp / for non i32"
       "==" -> case (a, b) of
         ValidEq ->
           unlines
@@ -230,6 +288,17 @@ generate (BinOp op a b) st =
               "cmove eax, ecx"
             ]
         _ -> compilerSemanticError "Invalid operator BinOp == for non i32"
+      "&&" -> case (a, b) of
+        ValidBoolOp ->
+          unlines
+            [ "; BinOp &&",
+              snd $ generate b st,
+              "push eax",
+              snd $ generate a st,
+              "pop ecx",
+              "and eax, ecx"
+            ]
+        _ -> compilerSemanticError "Invalid operator BinOp && for non-boolean"
       "||" -> case (a, b) of
         ValidBoolOp ->
           unlines
@@ -271,16 +340,9 @@ generate (BinOp op a b) st =
         _ -> compilerSemanticError "Invalid operator BinOp < for non i32"
       _ -> compilerSemanticError $ "Unknown binary operator: " ++ op
   )
-generate (IntNode val) st =
-  ( st,
-    unlines
-      [ "; IntNode",
-        "mov eax, " ++ show val
-      ]
-  )
 generate (Identifier name) st = (st, asmCode)
   where
-    value = getSymbol name st
+    !value = getSymbol name st -- Used for checking if var is declared
     asmCode =
       unlines
         [ "; Identifier",

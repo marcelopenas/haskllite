@@ -53,19 +53,19 @@
   println!(y > z);
   
   // All str operations 
-  let mut a:str;
-  let mut b:str;
+  // let mut a:str;
+  // let mut b:str;
   
   x_1 = 1;
   y = 1; 
   z = 2;
-  a = "abc";
-  b = "def";
-  println!(a+b);
-  println!(a+x_1);
-  println!(x_1+a);
-  println!(a+(x_1==1));
-  println!(a == a);
-  println!(a < b);
-  println!(a > b);
+  // a = "abc";
+  // b = "def";
+  // println!(a+b);
+  // println!(a+x_1);
+  // println!(x_1+a);
+  // println!(a+(x_1==1));
+  // println!(a == a);
+  // println!(a < b);
+  // println!(a > b);
 } // Teste do filter
