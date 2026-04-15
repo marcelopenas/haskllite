@@ -9,9 +9,10 @@ import CompilerError (compilerSemanticError)
 import Control.Monad (foldM)
 import Data.Bits (Bits (xor, (.&.), (.|.)))
 import Data.Char (intToDigit)
+import Data.List (intercalate)
 import Data.Unique (hashUnique, newUnique)
 import GHC.IO (unsafePerformIO)
-import SymbolTable (SymbolTable, Variable (..), createVariable, getSymbol, setSymbol)
+import SymbolTable (SymbolTable, Variable (..), createVariable, getSymbol, setSymbol, getOffset)
 import Token (VarType)
 
 data Node
@@ -190,230 +191,212 @@ pattern ValidNeg <-
       True
     )
 
-generate :: Node -> SymbolTable -> (SymbolTable, String)
+joinLines :: [[Char]] -> [Char]
+joinLines = intercalate "\n"
+
+generate :: Node -> SymbolTable -> (SymbolTable, [String])
 generate (IntNode val) st =
   ( st,
-    unlines
-      [ "; IntNode",
-        "mov eax, " ++ show val
-      ]
+    [ "; IntNode",
+      "mov eax, " ++ show val
+    ]
   )
-generate (StringNode val) st =
-  ( st,
-    unlines
-      [ "; StringNode",
-        "mov eax, " ++ show val
-      ]
-  )
-generate NoOp st = (st, "; NoOp")
+generate NoOp st = (st, ["; NoOp"])
 generate (UnOp op a) st =
   ( st,
     case op of
-      "+" -> "; UnOp +"
+      "+" ->
+        [ "; UnOp +"
+        ]
       "-" -> case a of
         ValidNeg ->
-          unlines
-            [ "; UnOp -",
-              snd $ generate a st,
-              "neg eax"
-            ]
+          [ "; UnOp -",
+            joinLines (snd (generate a st)),
+            "neg eax"
+          ]
         _ -> compilerSemanticError "Invalid operator BinOp - for non i32 | str"
       "!" ->
-        unlines
-          [ "; UnOp !",
-            snd $ generate a st,
-            "xor eax, 1"
-          ]
+        [ "; UnOp !",
+          joinLines (snd (generate a st)),
+          "xor eax, 1"
+        ]
   )
 generate (BinOp op a b) st =
   ( st,
     case op of
       "+" -> case (a, b) of
         ValidSum ->
-          unlines
-            [ "; BinOp +",
-              snd $ generate b st,
-              "push eax",
-              snd $ generate a st,
-              "pop ecx",
-              "add eax, ecx"
-            ]
+          [ "; BinOp +",
+            joinLines (snd (generate b st)),
+            "push eax",
+            joinLines (snd (generate a st)),
+            "pop ecx",
+            "add eax, ecx"
+          ]
         _ -> compilerSemanticError "Invalid operator BinOp + for non i32"
       "-" -> case (a, b) of
         ValidSum ->
-          unlines
-            [ "; BinOp +",
-              snd $ generate b st,
-              "push eax",
-              snd $ generate a st,
-              "pop ecx",
-              "sub eax, ecx"
-            ]
+          [ "; BinOp +",
+            joinLines (snd (generate b st)),
+            "push eax",
+            joinLines (snd (generate a st)),
+            "pop ecx",
+            "sub eax, ecx"
+          ]
         _ -> compilerSemanticError "Invalid operator BinOp - for non i32"
       "*" -> case (a, b) of
         ValidMul ->
-          unlines
-            [ "; BinOp *",
-              snd $ generate b st,
-              "push eax",
-              snd $ generate a st,
-              "pop ecx",
-              "imul eax, ecx"
-            ]
+          [ "; BinOp *",
+            joinLines (snd (generate b st)),
+            "push eax",
+            joinLines (snd (generate a st)),
+            "pop ecx",
+            "imul eax, ecx"
+          ]
         _ -> compilerSemanticError "Invalid operator BinOp * for non i32"
       "/" -> case (a, b) of
         (IntNode _, IntNode 0) -> compilerSemanticError "Division by zero literal in BinOp /"
         ValidDiv ->
-          unlines
-            [ "; BinOp /",
-              snd $ generate b st,
-              "push eax",
-              snd $ generate a st,
-              "pop ecx",
-              "cdq",
-              "idiv ecx"
-            ]
+          [ "; BinOp /",
+            joinLines (snd (generate b st)),
+            "push eax",
+            joinLines (snd (generate a st)),
+            "pop ecx",
+            "cdq",
+            "idiv ecx"
+          ]
         _ -> compilerSemanticError "Invalid operator BinOp / for non i32"
       "==" -> case (a, b) of
         ValidEq ->
-          unlines
-            [ "; BinOp +",
-              snd $ generate b st,
-              "push eax",
-              snd $ generate a st,
-              "pop ecx",
-              "cmp eax, ecx",
-              "mov ecx, 1",
-              "mov eax, 0",
-              "cmove eax, ecx"
-            ]
+          [ "; BinOp +",
+            joinLines (snd (generate b st)),
+            "push eax",
+            joinLines (snd (generate a st)),
+            "pop ecx",
+            "cmp eax, ecx",
+            "mov ecx, 1",
+            "mov eax, 0",
+            "cmove eax, ecx"
+          ]
         _ -> compilerSemanticError "Invalid operator BinOp == for non i32"
       "&&" -> case (a, b) of
         ValidBoolOp ->
-          unlines
-            [ "; BinOp &&",
-              snd $ generate b st,
-              "push eax",
-              snd $ generate a st,
-              "pop ecx",
-              "and eax, ecx"
-            ]
+          [ "; BinOp &&",
+            joinLines (snd (generate b st)),
+            "push eax",
+            joinLines (snd (generate a st)),
+            "pop ecx",
+            "and eax, ecx"
+          ]
         _ -> compilerSemanticError "Invalid operator BinOp && for non-boolean"
       "||" -> case (a, b) of
         ValidBoolOp ->
-          unlines
-            [ "; BinOp ||",
-              snd $ generate b st,
-              "push eax",
-              snd $ generate a st,
-              "pop ecx",
-              "or eax, ecx"
-            ]
+          [ "; BinOp ||",
+            joinLines (snd (generate b st)),
+            "push eax",
+            joinLines (snd (generate a st)),
+            "pop ecx",
+            "or eax, ecx"
+          ]
         _ -> compilerSemanticError "Invalid operator BinOp || for non-boolean"
       ">" -> case (a, b) of
         ValidRelOp ->
-          unlines
-            [ "; BinOp >",
-              snd $ generate b st,
-              "push eax",
-              snd $ generate a st,
-              "pop ecx",
-              "cmp eax, ecx",
-              "mov ecx, 1",
-              "mov eax, 0",
-              "cmovg eax, ecx"
-            ]
+          [ "; BinOp >",
+            joinLines (snd (generate b st)),
+            "push eax",
+            joinLines (snd (generate a st)),
+            "pop ecx",
+            "cmp eax, ecx",
+            "mov ecx, 1",
+            "mov eax, 0",
+            "cmovg eax, ecx"
+          ]
         _ -> compilerSemanticError "Invalid operator BinOp > for non i32"
       "<" -> case (a, b) of
         ValidRelOp ->
-          unlines
-            [ "; BinOp <",
-              snd $ generate b st,
-              "push eax",
-              snd $ generate a st,
-              "pop ecx",
-              "cmp eax, ecx",
-              "mov ecx, 1",
-              "mov eax, 0",
-              "cmovl eax, ecx"
-            ]
+          [ "; BinOp <",
+            joinLines (snd (generate b st)),
+            "push eax",
+            joinLines (snd (generate a st)),
+            "pop ecx",
+            "cmp eax, ecx",
+            "mov ecx, 1",
+            "mov eax, 0",
+            "cmovl eax, ecx"
+          ]
         _ -> compilerSemanticError "Invalid operator BinOp < for non i32"
       _ -> compilerSemanticError $ "Unknown binary operator: " ++ op
   )
 generate (Identifier name) st = (st, asmCode)
   where
     !value = getSymbol name st -- Used for checking if var is declared
+    offset = getOffset st
     asmCode =
-      unlines
-        [ "; Identifier",
-          "mov eax, [ebp-4]"
-        ]
+      [ "; Identifier",
+        "mov eax, [ebp" ++ show offset ++ "]"
+      ]
 generate (VarDec name expr immutable varType) st = (st', asmSource')
   where
     stC = createVariable (name, NullContent, immutable, varType) st
-    (st', asmSource) = generate expr stC
+    (st', asmSourceE) = generate expr stC
     asmSource' =
-      unlines
-        [ "; Declaration",
-          "sub esp, 4",
-          asmSource,
-          snd $ generate (Assignment name expr) st' -- Discards new st as it will be the equivalent to the original
-        ] -- FIXME when accessing unassigned val, returns leftover data
+      [ "; Declaration",
+        "sub esp, 4",
+        joinLines asmSourceE
+        -- joinLines (snd (generate (Assignment name expr) st')), -- Discards new st as it will be the equivalent to the original
+        -- FIXME when accessing unassigned val, returns leftover data
+      ]
 generate (Assignment name expr) st = (st', asmSource')
   where
     (st', asmSourceE) = generate expr st
+    offset = getOffset st
     asmSource' =
-      unlines
-        [ "; Assignment",
-          asmSourceE,
-          "mov [ebp-4], eax"
-        ]
+      [ "; Assignment",
+        joinLines asmSourceE,
+        "mov [ebp" ++ show offset ++ "], eax"
+      ]
 generate (Print node) st = (st', asmCode)
   where
     (st', nodeAsmCode) = generate node st
     asmCode =
-      nodeAsmCode
-        ++ "\n"
-        ++ unlines
-          [ "; Print",
-            "push eax",
-            "push format_out",
-            "call printf",
-            "add esp, 8"
-          ]
+      [ "; Print",
+        joinLines nodeAsmCode,
+        "push eax",
+        "push format_out",
+        "call printf",
+        "add esp, 8"
+      ]
 generate Scan st = (st, asmCode)
   where
     asmCode =
-      unlines
-        [ "; Scanln",
-          "push scan_int",
-          "push format_in",
-          "call scanf",
-          "add esp, 8",
-          "mov eax, dword [scan_int]"
-        ]
+      [ "; Scanln",
+        "push scan_int",
+        "push format_in",
+        "call scanf",
+        "add esp, 8",
+        "mov eax, dword [scan_int]"
+      ]
 generate (Block nodes) st = (st', asmCodes)
   where
     (st', asmCodes) =
       foldl
         ( \(stAcc, asmAcc) node ->
             let (stNext, asmNext) = generate node stAcc
-             in (stNext, asmAcc ++ asmNext ++ "\n")
+             in (stNext, asmAcc ++ asmNext)
         )
-        (st, "")
+        (st, [""])
         (reverse nodes)
 generate (While evalNode execNode) st =
   ( st',
-    unlines
-      [ "; While",
-        "loop_" ++ show identifier ++ ":",
-        evalAsmCode,
-        "cmp eax, 0",
-        "je exit_" ++ show identifier,
-        execAsmCode,
-        "jmp loop_" ++ show identifier,
-        "exit_" ++ show identifier ++ ":"
-      ]
+    [ "; While",
+      "loop_" ++ show identifier ++ ":",
+      joinLines evalAsmCode,
+      "cmp eax, 0",
+      "je exit_" ++ show identifier,
+      joinLines execAsmCode,
+      "jmp loop_" ++ show identifier,
+      "exit_" ++ show identifier ++ ":"
+    ]
   )
   where
     identifier = hashUnique $ unsafePerformIO newUnique
@@ -421,17 +404,16 @@ generate (While evalNode execNode) st =
     (st', execAsmCode) = generate execNode evalSt
 generate (If evalNode ifNode elseNode) st =
   ( st'',
-    unlines
-      [ "; If-Else",
-        evalAsmCode,
-        "cmp eax, 0",
-        "je else_" ++ show identifier,
-        ifAsmCode,
-        "jmp exit_" ++ show identifier,
-        "else_" ++ show identifier ++ ":",
-        elseAsmCode,
-        "exit_" ++ show identifier ++ ":"
-      ]
+    [ "; If-Else",
+      joinLines evalAsmCode,
+      "cmp eax, 0",
+      "je else_" ++ show identifier,
+      joinLines ifAsmCode,
+      "jmp exit_" ++ show identifier,
+      "else_" ++ show identifier ++ ":",
+      joinLines elseAsmCode,
+      "exit_" ++ show identifier ++ ":"
+    ]
   )
   where
     identifier = hashUnique $ unsafePerformIO newUnique

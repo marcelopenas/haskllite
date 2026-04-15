@@ -4,6 +4,7 @@ module SymbolTable
     setSymbol,
     createVariable,
     newSymbolTable,
+    getOffset,
     Variable (..),
   )
 where
@@ -11,6 +12,7 @@ where
 import CompilerError (compilerSemanticError)
 import Data.Data (Data (toConstr))
 import Data.List (find)
+import Data.Set qualified as Set
 import Token (VarType (BooleanT, I32T, StrT))
 
 data Variable
@@ -64,6 +66,10 @@ setSymbol (name, content) table = case lookup4 name table of
       then (name, content, immutable, varType) : table
       else compilerSemanticError $ "could not assign type: " ++ show (toConstr content) ++ " to: " ++ show varType
   _ -> compilerSemanticError $ "tried assigning value to undeclared variable: " ++ show name
+
+-- TODO restrict stack to block
+getOffset :: SymbolTable -> Int
+getOffset st = -(Set.size (Set.fromList [name | (name, _, _, _) <- st]) * 4)
 
 newSymbolTable :: SymbolTable
 newSymbolTable = []

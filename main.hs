@@ -20,7 +20,8 @@ main = do
           compilerInput <- readFile filePath
           -- !st <- execute (run $ preProcess compilerInput ++ "\n") newSymbolTable
           let !(st, asmCode) = generate (run $ preProcess compilerInput ++ "\n") newSymbolTable
-          writeFile (takeBaseName filePath ++ ".asm") (formatAsmCode asmCode)
+          -- writeFile (takeBaseName filePath ++ ".asm") (formatAsmCode $ unlines $ map ("  " ++) asmCode)
+          writeFile (takeBaseName filePath ++ ".asm") (formatAsmCode $ unlines asmCode)
           return ()
 
 -- TODO use multiline string literals instead of function that is runtime
@@ -41,11 +42,12 @@ formatAsmCode asmCode =
       "_start:",
       "  push ebp ; store EBP",
       "  mov ebp, esp ; clear stack",
-      ""
+      "  ; Code start"
     ]
     ++ asmCode
     ++ unlines
       [ "",
+        "  ; Code end",
         "  mov esp, ebp ; re-establish stack",
         "  pop ebp",
         "",
