@@ -12,7 +12,7 @@ import Data.Char (intToDigit)
 import Data.List (intercalate)
 import Data.Unique (hashUnique, newUnique)
 import GHC.IO (unsafePerformIO)
-import SymbolTable (SymbolTable, Variable (..), createVariable, getSymbol, setSymbol, getOffset)
+import SymbolTable (SymbolTable, Variable (..), createVariable, getOffset, getSymbol, setSymbol)
 import Token (VarType)
 
 data Node
@@ -162,8 +162,14 @@ pattern ValidEq <-
       True
     )
 
+pattern ValidXor :: (Node, Node)
+pattern ValidXor <- ValidSum
+
 pattern ValidMul :: (Node, Node)
 pattern ValidMul <- ValidSum
+
+pattern ValidPower :: (Node, Node)
+pattern ValidPower <- ValidMul
 
 pattern ValidDiv :: (Node, Node)
 pattern ValidDiv <- ValidSum
@@ -266,6 +272,36 @@ generate (BinOp op a b) st =
             "idiv ecx"
           ]
         _ -> compilerSemanticError "Invalid operator BinOp / for non i32"
+      "**" -> case (a, b) of
+        (a, IntNode bVal) | bVal <= 0 -> compilerSemanticError "Negative exponent not supported"
+        ValidMul ->
+          let idPower = hashUnique $ unsafePerformIO newUnique
+           in [ "; BinOp ** (Power)",
+                joinLines (snd (generate b st)),
+                "push eax",
+                joinLines (snd (generate a st)),
+                "pop ecx",
+                "mov edx, eax",
+                "mov eax, 1",
+                "cmp ecx, 0",
+                "jle exit_pow_" ++ show idPower,
+                "pow_loop_" ++ show idPower ++ ":",
+                "imul eax, edx",
+                "dec ecx",
+                "jnz pow_loop_" ++ show idPower,
+                "exit_pow_" ++ show idPower ++ ":"
+              ]
+        _ -> compilerSemanticError "Invalid operator BinOp ** for non i32"
+      "^" -> case (a, b) of
+        ValidXor ->
+          [ "; BinOp ^",
+            joinLines (snd (generate b st)),
+            "push eax",
+            joinLines (snd (generate a st)),
+            "pop ecx",
+            "xor eax, ecx"
+          ]
+        _ -> compilerSemanticError "Invalid operator BinOp ^"
       "==" -> case (a, b) of
         ValidEq ->
           [ "; BinOp +",
