@@ -11,7 +11,7 @@ where
 
 import CompilerError (compilerSemanticError)
 import Data.Data (Data (toConstr))
-import Data.List (find)
+import Data.List (elemIndex, find, nub)
 import Data.Set qualified as Set
 import Token (VarType (BooleanT, I32T, StrT))
 
@@ -67,9 +67,13 @@ setSymbol (name, content) table = case lookup4 name table of
       else compilerSemanticError $ "could not assign type: " ++ show (toConstr content) ++ " to: " ++ show varType
   _ -> compilerSemanticError $ "tried assigning value to undeclared variable: " ++ show name
 
--- TODO restrict stack to block
-getOffset :: SymbolTable -> Int
-getOffset st = -(Set.size (Set.fromList [name | (name, _, _, _) <- st]) * 4)
+getOffset :: String -> SymbolTable -> Int
+getOffset name st =
+  case elemIndex name uniqueNames of
+    Just idx -> (idx + 1) * (-4)
+    Nothing -> compilerSemanticError $ "Undefined variable: " ++ name
+  where
+    uniqueNames = reverse (nub [n | (n, _, _, _) <- st])
 
 newSymbolTable :: SymbolTable
 newSymbolTable = []

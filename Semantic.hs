@@ -366,26 +366,26 @@ generate (BinOp op a b) st =
 generate (Identifier name) st = (st, asmCode)
   where
     !value = getSymbol name st -- Used for checking if var is declared
-    offset = getOffset st
+    offset = getOffset name st
     asmCode =
       [ "; Identifier",
         "mov eax, [ebp" ++ show offset ++ "]"
       ]
-generate (VarDec name expr immutable varType) st = (st', asmSource')
+generate (VarDec name expr immutable varType) st = (st'', asmSource')
   where
-    stC = createVariable (name, NullContent, immutable, varType) st
-    (st', asmSourceE) = generate expr stC
+    st' = createVariable (name, NullContent, immutable, varType) st
+    (st'', asmSourceE) = generate expr st'
+    offset = getOffset name st''
     asmSource' =
       [ "; Declaration",
         "sub esp, 4",
-        joinLines asmSourceE
-        -- joinLines (snd (generate (Assignment name expr) st')), -- Discards new st as it will be the equivalent to the original
-        -- FIXME when accessing unassigned val, returns leftover data
+        joinLines asmSourceE,
+        "mov [ebp" ++ show offset ++ "], eax" -- Equivalent to assignment
       ]
 generate (Assignment name expr) st = (st', asmSource')
   where
     (st', asmSourceE) = generate expr st
-    offset = getOffset st
+    offset = getOffset name st
     asmSource' =
       [ "; Assignment",
         joinLines asmSourceE,

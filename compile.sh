@@ -1,15 +1,20 @@
 #!/bin/bash
 
 file_path="$1"
+
+dir_path="${file_path%/*}"
+[[ "$file_path" == "$dir_path" ]] && dir_path="."
+
 filename="${file_path##*/}"
 name="${filename%.*}"
 
-obj_file="$name.o"
-asm_file="$name.asm"
+obj_file="$dir_path/$name.o"
+asm_file="$dir_path/$name.asm"
+exe_file="$dir_path/$name"
 
 runghc main.hs "$file_path" && \
 nasm -f elf32 -o "$obj_file" "$asm_file" && \
-gcc -m32 -no-pie -nostartfiles -o "$name" "$name".o -e _start
+gcc -m32 -no-pie -nostartfiles -o "$exe_file" "$obj_file" -e _start
 
 # Cleanup
 if [ "$2" != "-save-temps" ]; then
