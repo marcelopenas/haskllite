@@ -193,6 +193,8 @@ pattern ValidNeg <-
   ( \case
       (IntNode a) -> True
       (Identifier a) -> True
+      (BinOp {}) -> True
+      (UnOp _ _) -> True
       _ -> False ->
       True
     )
@@ -212,7 +214,8 @@ generate (UnOp op a) st =
   ( st,
     case op of
       "+" ->
-        [ "; UnOp +"
+        [ "; UnOp +",
+          joinLines (snd (generate a st))
         ]
       "-" -> case a of
         ValidNeg ->
@@ -220,7 +223,7 @@ generate (UnOp op a) st =
             joinLines (snd (generate a st)),
             "neg eax"
           ]
-        _ -> compilerSemanticError "Invalid operator BinOp - for non i32 | str"
+        _ -> compilerSemanticError "Invalid operator UnOp - for non i32 | str"
       "!" ->
         [ "; UnOp !",
           joinLines (snd (generate a st)),
@@ -242,14 +245,13 @@ generate (BinOp op a b) st =
         _ -> compilerSemanticError "Invalid operator BinOp + for non i32"
       "-" -> case (a, b) of
         ValidSum ->
-          [ "; BinOp +",
+          [ "; BinOp -",
             joinLines (snd (generate b st)),
             "push eax",
             joinLines (snd (generate a st)),
             "pop ecx",
             "sub eax, ecx"
           ]
-        _ -> compilerSemanticError "Invalid operator BinOp - for non i32"
       "*" -> case (a, b) of
         ValidMul ->
           [ "; BinOp *",
@@ -268,6 +270,7 @@ generate (BinOp op a b) st =
             "push eax",
             joinLines (snd (generate a st)),
             "pop ecx",
+            -- "xor edx, edx",
             "cdq",
             "idiv ecx"
           ]
@@ -304,7 +307,7 @@ generate (BinOp op a b) st =
         _ -> compilerSemanticError "Invalid operator BinOp ^"
       "==" -> case (a, b) of
         ValidEq ->
-          [ "; BinOp +",
+          [ "; BinOp ==",
             joinLines (snd (generate b st)),
             "push eax",
             joinLines (snd (generate a st)),

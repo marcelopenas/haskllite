@@ -19,6 +19,7 @@
   }
   
   let mut x:i32 = 3+6/3   *  2 -+-  +  2*4/2 + 0/1 -((6+ ((4)))/(2)); // Teste // Teste 2
+  println!(x);
   let mut y_1:i32 = 3;
   y_1 = y_1 + x_1;
   let mut z__:i32;
