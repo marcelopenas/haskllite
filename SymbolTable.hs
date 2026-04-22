@@ -13,10 +13,11 @@ import CompilerError (compilerSemanticError)
 import Data.Data (Data (toConstr))
 import Data.List (elemIndex, find, nub)
 import Data.Set qualified as Set
-import Token (VarType (BooleanT, I32T, StrT))
+import Token (VarType (BooleanT, I32T, StrT, F64T))
 
 data Variable
   = IntContent Int
+  | FloatContent Float
   | StringContent String
   | BoolContent Bool
   | NullContent
@@ -25,6 +26,7 @@ data Variable
 instance Show Variable where
   show :: Variable -> String
   show (IntContent s) = show s
+  show (FloatContent s) = show s
   show (StringContent s) = s
   show (BoolContent True) = "true"
   show (BoolContent False) = "false"
@@ -53,6 +55,7 @@ createVariable symbol@(name, variable, immutable, varType) table = case lookup4 
 
 typeMatch :: VarType -> Variable -> Bool
 typeMatch I32T (IntContent _) = True
+typeMatch F64T (FloatContent _) = True
 typeMatch StrT (StringContent _) = True
 typeMatch BooleanT (BoolContent _) = True
 typeMatch _ NullContent = True

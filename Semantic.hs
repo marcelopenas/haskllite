@@ -13,12 +13,14 @@ import Data.List (intercalate)
 import Data.Unique (hashUnique, newUnique)
 import GHC.IO (unsafePerformIO)
 import SymbolTable (SymbolTable, Variable (..), createVariable, getOffset, getSymbol, setSymbol)
-import Token (VarType)
+import Token (VarType (F64T, I32T))
 
 data Node
   = IntNode Int
+  | FloatNode Float
   | BoolNode Bool
   | StringNode String
+  | CastNode Node VarType
   | UnOp String Node
   | BinOp String Node Node
   | Identifier String
@@ -35,8 +37,21 @@ data Node
 evaluate :: Node -> SymbolTable -> Variable
 evaluate Scan st = IntContent $ unsafePerformIO (readLn :: IO Int) -- TODO cast other types depending on :
 evaluate (IntNode n) st = IntContent n
+evaluate (FloatNode n) st = FloatContent n
 evaluate (BoolNode n) st = BoolContent n
 evaluate (StringNode n) st = StringContent n
+evaluate (CastNode n F64T) st = case n' of
+  IntContent n -> FloatContent (fromIntegral n :: Float)
+  FloatContent n -> FloatContent n
+  _ -> compilerSemanticError "Invalid cast to f64"
+  where
+    n' = evaluate n st
+evaluate (CastNode n I32T) st = case n' of
+  FloatContent n -> IntContent (truncate n :: Int)
+  IntContent n -> IntContent n
+  _ -> compilerSemanticError "Invalid cast to i32"
+  where
+    n' = evaluate n st
 evaluate (UnOp op a) st = case (op, a') of
   ("+", IntContent a') -> IntContent a'
   ("+", _) -> compilerSemanticError "Invalid operator UnOp + for non i32"
@@ -47,8 +62,11 @@ evaluate (UnOp op a) st = case (op, a') of
   ("!", _) -> compilerSemanticError "Invalid operator UnOp ! for non i32 | bool"
   where
     a' = evaluate a st
-evaluate (BinOp op a b) st = case (op, a', b') of
+evaluate (BinOp op a b) st = case (op, a', b') of -- TODO add other implicit int to float conversions
   ("+", IntContent a', IntContent b') -> IntContent $ a' + b'
+  ("+", IntContent a', FloatContent b') -> FloatContent $ fromIntegral a' + b'
+  ("+", FloatContent a', IntContent b') -> FloatContent $ a' + fromIntegral b'
+  ("+", FloatContent a', FloatContent b') -> FloatContent $ a' + b'
   ("+", StringContent a', StringContent b') -> StringContent $ a' ++ b'
   ("+", StringContent a', IntContent b') -> StringContent $ reverse $ intToDigit b' : reverse a'
   ("+", IntContent a', StringContent b') -> StringContent $ intToDigit a' : b'
@@ -58,6 +76,9 @@ evaluate (BinOp op a b) st = case (op, a', b') of
   ("+", BoolContent False, StringContent b') -> StringContent $ "false" ++ b'
   ("+", _, _) -> compilerSemanticError "Invalid operator BinOp + for non i32 | str"
   ("-", IntContent a', IntContent b') -> IntContent $ a' - b'
+  ("-", IntContent a', FloatContent b') -> FloatContent $ fromIntegral a' - b'
+  ("-", FloatContent a', IntContent b') -> FloatContent $ a' - fromIntegral b'
+  ("-", FloatContent a', FloatContent b') -> FloatContent $ a' - b'
   ("-", _, _) -> compilerSemanticError "Invalid operator BinOp - for non i32"
   ("^", IntContent a', IntContent b') -> IntContent $ a' `xor` b'
   ("^", BoolContent a', BoolContent b') -> BoolContent $ a' `xor` b'
@@ -94,6 +115,10 @@ evaluate (BinOp op a b) st = case (op, a', b') of
     a' = evaluate a st
     b' = evaluate b st
 evaluate (Identifier name) st = getSymbol name st
+evaluate (If evalNode ifNode elseNode) st =
+  if isTrue (evaluate evalNode st)
+    then evaluate ifNode st
+    else evaluate elseNode st
 evaluate NoOp st = NullContent -- FIXME this should not be here, it is to fix a empty statement calling eval on noOp
 
 execute :: Node -> SymbolTable -> IO SymbolTable

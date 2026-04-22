@@ -10,12 +10,15 @@ type Immutable = Bool
 
 data VarType
   = I32T
+  | F64T
   | BooleanT
   | StrT
   deriving (Show, Eq)
 
 data Token
   = INT Int
+  | FLOAT Float
+  | PERIOD
   | PLUS
   | MINUS
   | XOR

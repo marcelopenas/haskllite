@@ -1,7 +1,7 @@
 module Parser.Term (parseTerm) where
 
 import Lexer (Lexer (..), LexerState, getNext)
-import Parser.Factor (parseFactor)
+import {-# SOURCE #-} Parser.Factor (parseFactor)
 import Parser.Parser (Parser)
 import Semantic (Node (BinOp))
 import Token (Token (DIV, MULT))

@@ -27,7 +27,7 @@ getPrevLex (Lexer source position) = Lexer source (position - 1)
 getCharLex :: Lexer -> Char
 getCharLex (Lexer source position)
   | position < length source = source !! position
-  | otherwise = compilerLexerError (position, source !! (position - 1)) "getChar beyond source"
+  | otherwise = compilerLexerError source (position, source !! (position - 1)) "getChar beyond source"
 
 emptyBuilder :: String
 emptyBuilder = ""
@@ -48,6 +48,7 @@ getNext currentLex@(Lexer source position)
       (newLex, IDENTIFIER "false") -> (newLex, BOOLEAN False)
       (newLex, IDENTIFIER "str") -> (newLex, TYPE StrT)
       (newLex, IDENTIFIER "i32") -> (newLex, TYPE I32T)
+      (newLex, IDENTIFIER "f64") -> (newLex, TYPE F64T)
       (newLex, IDENTIFIER "bool") -> (newLex, TYPE BooleanT)
       _ -> identifierLexState
   | isDigit nextChar = getNextParse nextLex (INT 0) insInt emptyBuilder
@@ -65,6 +66,7 @@ getNext currentLex@(Lexer source position)
       '<' -> (nextLex, LESSER)
       ';' -> (nextLex, END)
       ':' -> (nextLex, TYPE_ASSIGN)
+      '.' -> (nextLex, PERIOD)
       '*' -> case nextNextChar of
         '*' -> (nextNextLex, POWER)
         _ -> (nextLex, MULT)
@@ -73,12 +75,12 @@ getNext currentLex@(Lexer source position)
         _ -> (nextLex, ASSIGN)
       '&' -> case nextNextChar of
         '&' -> (nextNextLex, AND)
-        _ -> compilerLexerError (nextPos, nextChar) "Invalid token at position"
+        _ -> compilerLexerError source (nextPos, nextChar) "Invalid token"
       '|' -> case nextNextChar of
         '|' -> (nextNextLex, OR)
-        _ -> compilerLexerError (nextPos, nextChar) "Invalid token at position"
+        _ -> compilerLexerError source (nextPos, nextChar) "Invalid token"
       '\"' -> getNextParseString nextLex emptyBuilder
-      _ -> compilerLexerError (nextPos, nextChar) "Invalid token at position"
+      _ -> compilerLexerError source (nextPos, nextChar) "Invalid token"
   where
     nextLex = getNextLex currentLex
     nextChar = getCharLex nextLex
@@ -93,7 +95,7 @@ getNextParseString currentLex@(Lexer source position) building = case nextChar o
   '\"' -> (nextLex, STR $ reverse building)
   _
     | (position + 1) < length source -> getNextParseString nextLex (nextChar : building)
-    | otherwise -> compilerLexerError (position, source !! (position - 1)) "EOL on string" -- FIXME this never happens, why???
+    | otherwise -> compilerLexerError source (position, source !! (position - 1)) "EOL on string" -- FIXME this never happens, why???
   where
     nextLex = getNextLex currentLex
     nextChar = getCharLex nextLex
@@ -106,8 +108,14 @@ getNextParse currentLex@(Lexer source position) token isIdentifier building = ca
     | otherwise -> (prevLex, IDENTIFIER building)
   INT _
     | position >= length source -> (currentLex, INT (read building :: Int))
+    | currentChar == '.' -> getNextParse nextLex (FLOAT 0) isIdentifier (building ++ [currentChar])
     | isIdentifier currentChar -> getNextParse nextLex (INT 0) isIdentifier (building ++ [currentChar])
     | otherwise -> (prevLex, INT (read building :: Int))
+  FLOAT _
+    | position >= length source -> (currentLex, FLOAT (read building :: Float))
+    | currentChar == '.' -> compilerLexerError source (position, currentChar) "Two periods used in float"
+    | isIdentifier currentChar -> getNextParse nextLex (FLOAT 0) isIdentifier (building ++ [currentChar])
+    | otherwise -> (prevLex, FLOAT (read building :: Float))
   where
     nextLex = getNextLex currentLex
     prevLex = getPrevLex currentLex

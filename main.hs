@@ -18,9 +18,9 @@ main = do
         then error "[Main] must be .rs file"
         else do
           compilerInput <- readFile filePath
-          -- !st <- execute (run $ preProcess compilerInput ++ "\n") newSymbolTable
-          let !(st, asmCode) = generate (run $ preProcess compilerInput ++ "\n") newSymbolTable
-          writeFile (takeDirectory filePath ++ "/" ++ (takeBaseName filePath ++ ".asm")) (formatAsmCode $ unlines asmCode)
+          !st <- execute (run $ preProcess compilerInput ++ "\n") newSymbolTable
+          -- let !(st, asmCode) = generate (run $ preProcess compilerInput ++ "\n") newSymbolTable
+          -- writeFile (takeDirectory filePath ++ "/" ++ (takeBaseName filePath ++ ".asm")) (formatAsmCode $ unlines asmCode)
           return ()
 
 formatAsmCode :: String -> String

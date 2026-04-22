@@ -1,6 +1,7 @@
 module Parser.Factor (parseFactor) where
 
 import CompilerError (compilerParserError)
+import Distribution.Fields.LexerMonad (LexState)
 import Lexer (Lexer (..), LexerState, getNext)
 import {-# SOURCE #-} Parser.BoolExpression (parseBoolExpression)
 import Parser.Parser (Parser)
@@ -13,19 +14,31 @@ parseFactor lexState@(lex, token) = case token of
   MINUS -> (factorLexState, UnOp "-" factorNode)
   NOT -> (factorLexState, UnOp "!" factorNode)
   SCAN -> (parseFactorScan $ getNext lex, Scan)
-  OPEN_PAR ->
-    if expressionToken == CLOSE_PAR
-      then (getNext expressionLex, expressionNode) -- Consume CLOSE_PAR
-      else compilerParserError (expressionLex, expressionToken) "Expected CLOSE_PAR"
-  INT val -> (nextLex, IntNode val)
-  BOOLEAN val -> (nextLex, BoolNode val)
-  STR val -> (nextLex, StringNode val)
-  IDENTIFIER name -> (nextLex, Identifier name)
+  OPEN_PAR -> case getNext lex of
+    (typeLex, TYPE typeName) ->
+      let castLexState = parseFactorClose $ getNext typeLex
+          (afterCastLexState, castNode) = parseFactor castLexState
+       in (afterCastLexState, CastNode castNode typeName)
+    _ ->
+      if expressionToken == CLOSE_PAR
+        then (nextExpressionState, expressionNode) -- Consume CLOSE_PAR
+        else compilerParserError (expressionLex, expressionToken) "Expected CLOSE_PAR"
+  INT val -> (nextLexState, IntNode val)
+  FLOAT val -> (nextLexState, FloatNode val)
+  BOOLEAN val -> (nextLexState, BoolNode val)
+  STR val -> (nextLexState, StringNode val)
+  IDENTIFIER name -> (nextLexState, Identifier name)
+  IF ->
+    let (afterIfLexState, afterIfNode) = parseBoolExpression $ getNext lex
+        (trueLexState, trueNode) = parseFactorIf afterIfLexState
+        (falseLexState, falseNode) = parseFactorElse trueLexState
+     in (falseLexState, If afterIfNode trueNode falseNode)
   _ -> compilerParserError lexState "Expected INT | BOOL | STR | IDENT"
   where
-    nextLex = getNext lex
-    (factorLexState, factorNode) = parseFactor nextLex
+    nextLexState = getNext lex
+    (factorLexState, factorNode) = parseFactor nextLexState
     ((expressionLex, expressionToken), expressionNode) = parseBoolExpression (getNext lex)
+    nextExpressionState@(nextExpressionLex, nextExpressionToken) = getNext expressionLex
 
 parseFactorScan :: LexerState -> LexerState
 parseFactorScan lexState@(lex, token) = case token of
@@ -36,3 +49,26 @@ parseFactorClose :: LexerState -> LexerState
 parseFactorClose lexState@(lex, token) = case token of
   CLOSE_PAR -> getNext lex
   _ -> compilerParserError lexState "Expected close par"
+
+parseFactorClosePass :: (LexerState, Node) -> (LexerState, Node)
+parseFactorClosePass (lexState@(lex, token), node) = case token of
+  CLOSE_PAR -> (getNext lex, node)
+  _ -> compilerParserError lexState "Expected close par"
+
+parseFactorIf :: Parser Node
+parseFactorIf lexState@(lex, token) = parseFactorCloseBra $ parseFactor $ parseFactorOpenBra lexState
+
+parseFactorOpenBra :: LexerState -> LexerState
+parseFactorOpenBra lexState@(lex, token) = case token of
+  OPEN_BRA -> getNext lex
+  _ -> compilerParserError lexState "Expected open bra"
+
+parseFactorCloseBra :: (LexerState, Node) -> (LexerState, Node)
+parseFactorCloseBra (lexState@(lex, token), node) = case token of
+  CLOSE_BRA -> (getNext lex, node)
+  _ -> compilerParserError lexState "Expected close bra"
+
+parseFactorElse :: Parser Node
+parseFactorElse lexState@(lex, token) = case token of
+  ELSE -> parseFactorIf $ getNext lex
+  _ -> compilerParserError lexState "expected else in if expression"
