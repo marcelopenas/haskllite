@@ -37,6 +37,7 @@ data Token
   | CLOSE_BRA
   | IF
   | WHILE
+  | FOR
   | ELSE
   | SCAN
   | ASSIGN

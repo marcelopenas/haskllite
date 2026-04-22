@@ -26,9 +26,10 @@ data Node
   | Identifier String
   | Print Node
   | Scan
-  | If Node Node Node
-  | While Node Node
-  | Assignment String Node -- Name Expression Immutable
+  | If Node Node Node -- Contdition Expression If Node Else Node
+  | While Node Node -- Condition Expression
+  | For Node Node Node Node -- Assignment Condition Update Expression
+  | Assignment String Node -- Name Expression
   | VarDec String Node Bool VarType -- -- Name Expression Immutable Type
   | Block [Node]
   | NoOp
@@ -126,10 +127,16 @@ evaluate (BinOp op a b) st = case (op, a', b') of -- TODO add other implicit int
   ("==", StringContent a', StringContent b') -> BoolContent $ a' == b'
   ("==", _, _) -> compilerSemanticError "Invalid operator BinOp == for non CMP"
   (">", IntContent a', IntContent b') -> BoolContent $ a' > b'
+  (">", IntContent a', FloatContent b') -> BoolContent $ fromIntegral a' > b'
+  (">", FloatContent a', IntContent b') -> BoolContent $ a' > fromIntegral b'
+  (">", FloatContent a', FloatContent b') -> BoolContent $ a' > b'
   (">", BoolContent a', BoolContent b') -> BoolContent $ a' > b'
   (">", StringContent a', StringContent b') -> BoolContent $ a' > b'
   (">", _, _) -> compilerSemanticError "Invalid operator BinOp > for non CMP"
   ("<", IntContent a', IntContent b') -> BoolContent $ a' < b'
+  ("<", IntContent a', FloatContent b') -> BoolContent $ fromIntegral a' < b'
+  ("<", FloatContent a', IntContent b') -> BoolContent $ a' < fromIntegral b'
+  ("<", FloatContent a', FloatContent b') -> BoolContent $ a' < b'
   ("<", BoolContent a', BoolContent b') -> BoolContent $ a' < b'
   ("<", StringContent a', StringContent b') -> BoolContent $ a' < b'
   ("<", _, _) -> compilerSemanticError "Invalid operator BinOp < for non CMP"
@@ -180,6 +187,18 @@ execute (While evalNode node) st = do
       execute (While evalNode node) nextSt
     else
       return st
+execute (For assignment condition update expression) st = do
+  -- ?should assignment be  passed and executed multiple times, or updated directly?
+  !st' <- execute assignment st
+  let !continue = evaluate condition st'
+  if isTrue continue
+    then do
+      !exprSt <- execute expression st'
+      !updateSt <- execute update exprSt
+      !nextSt <- execute (For NoOp condition update expression) updateSt -- No op so that it executes init once
+      return nextSt
+    else
+      return st'
 execute NoOp st = return st
 
 pattern ValidSum :: (Node, Node)

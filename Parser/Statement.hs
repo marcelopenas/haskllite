@@ -5,8 +5,8 @@ import Lexer (Lexer (..), LexerState, getNext)
 import {-# SOURCE #-} Parser.Block (parseBlock)
 import Parser.BoolExpression (parseBoolExpression)
 import Parser.Parser (Parser)
-import Semantic (Node (Assignment, If, NoOp, Print, VarDec, While))
-import Token (Token (ASSIGN, CLOSE_PAR, ELSE, END, IDENTIFIER, IF, LET, MUT, OPEN_PAR, PRINT, TYPE, TYPE_ASSIGN, WHILE), VarType)
+import Semantic (Node (Assignment, For, If, NoOp, Print, VarDec, While))
+import Token (Token (ASSIGN, CLOSE_PAR, ELSE, END, FOR, IDENTIFIER, IF, LET, MUT, OPEN_PAR, PRINT, TYPE, TYPE_ASSIGN, WHILE), VarType (I32T))
 
 parseStatement :: Parser Node
 parseStatement lexState@(lex, token) = case token of
@@ -15,6 +15,12 @@ parseStatement lexState@(lex, token) = case token of
   IDENTIFIER name -> parseStatementAssign name nextLexState
   PRINT -> (parseStatementEnd openParLexerState, Print openParNode)
   WHILE -> (statementLexState, While openParNode statementNode)
+  FOR ->
+    let (assignmentLexState, assignmentNode) = parseStatementEndP $ parseStatementInitFor $ parseStatementOpenParP nextLexState -- custom "parseStatementLet"" to not use type default to int and DecVal
+        (conditionLexState, conditionNode) = parseStatementEndP $ parseBoolExpression assignmentLexState
+        (updateLexState, updateNode) = parseStatementCloseParP $ parseStatementIdentifierFor conditionLexState -- custom "parseStatement" to not use ; in end
+        (expressionLexState, expressionNode) = parseBlock updateLexState
+     in (expressionLexState, For assignmentNode conditionNode updateNode expressionNode)
   IF ->
     let (afterStatementLexState, afterAfterNode) = parseStatementElse statementLexState
      in (afterStatementLexState, If openParNode statementNode afterAfterNode)
@@ -28,6 +34,16 @@ parseStatementOpenPar :: LexerState -> LexerState
 parseStatementOpenPar lexState@(lex, token) = case token of
   OPEN_PAR -> lexState
   _ -> compilerParserError lexState "Expected open parenthesis"
+
+parseStatementOpenParP :: LexerState -> LexerState
+parseStatementOpenParP lexState@(lex, token) = case token of
+  OPEN_PAR -> getNext lex
+  _ -> compilerParserError lexState "Expected open parenthesis"
+
+parseStatementCloseParP :: (LexerState, Node) -> (LexerState, Node)
+parseStatementCloseParP (lexState@(lex, token), node) = case token of
+  CLOSE_PAR -> (getNext lex, node)
+  _ -> compilerParserError lexState "Expected close parenthesis"
 
 parseStatementElse :: Parser Node
 parseStatementElse lexState@(lex, token) = case token of
@@ -81,3 +97,27 @@ parseStatementEnd :: (Lexer, Token) -> (Lexer, Token)
 parseStatementEnd lexState@(lex, token) = case token of
   END -> getNext lex
   _ -> compilerParserError lexState "No END in statement"
+
+parseStatementEndP :: (LexerState, Node) -> (LexerState, Node)
+parseStatementEndP (lexState@(lex, token), node) = case token of
+  END -> (getNext lex, node)
+  _ -> compilerParserError lexState "No END in statement"
+
+-- * For
+
+parseStatementInitFor :: Parser Node
+parseStatementInitFor lexState@(lex, token) = case token of
+  MUT -> parseStatementMut $ getNext lex
+  IDENTIFIER name -> parseStatementDeclare name False I32T $ getNext lex -- Initial var is auto mut and i32
+  _ -> compilerParserError lexState "Expected identifier"
+
+parseStatementIdentifierFor :: Parser Node
+parseStatementIdentifierFor lexState@(lex, token) = case token of
+  IDENTIFIER name -> parseStatementAssignFor name (getNext lex)
+
+parseStatementAssignFor :: String -> Parser Node
+parseStatementAssignFor name lexState@(lex, token) = case token of
+  ASSIGN -> (expressionLexState, Assignment name newNode)
+  _ -> compilerParserError lexState "Expected assignment"
+  where
+    (expressionLexState, newNode) = parseBoolExpression $ getNext lex

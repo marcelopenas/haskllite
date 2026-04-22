@@ -42,6 +42,7 @@ getNext currentLex@(Lexer source position)
       (newLex, IDENTIFIER "mut") -> (newLex, MUT)
       (newLex, IDENTIFIER "if") -> (newLex, IF)
       (newLex, IDENTIFIER "while") -> (newLex, WHILE)
+      (newLex, IDENTIFIER "for") -> (newLex, FOR)
       (newLex, IDENTIFIER "else") -> (newLex, ELSE)
       (newLex, IDENTIFIER "scanln!") -> (newLex, SCAN)
       (newLex, IDENTIFIER "true") -> (newLex, BOOLEAN True)
@@ -50,6 +51,9 @@ getNext currentLex@(Lexer source position)
       (newLex, IDENTIFIER "i32") -> (newLex, TYPE I32T)
       (newLex, IDENTIFIER "f64") -> (newLex, TYPE F64T)
       (newLex, IDENTIFIER "bool") -> (newLex, TYPE BooleanT)
+      --  Mathematical constants
+      (newLex, IDENTIFIER "e") -> (newLex, FLOAT (exp 1))
+      (newLex, IDENTIFIER "pi") -> (newLex, FLOAT pi)
       _ -> identifierLexState
   | isDigit nextChar = getNextParse nextLex (INT 0) insInt emptyBuilder
   | otherwise = case nextChar of

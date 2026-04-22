@@ -2,10 +2,11 @@
 
 import Parser.Run (run)
 import PreProcess (preProcess)
-import Semantic (execute, generate)
+import Semantic (Node (Assignment, BinOp, BoolNode, For, Identifier, IntNode, NoOp, Print, VarDec), execute, generate)
 import SymbolTable (newSymbolTable)
 import System.Environment (getArgs)
 import System.FilePath (takeBaseName, takeDirectory, takeExtension)
+import Token (VarType (I32T))
 
 main :: IO ()
 main = do
@@ -17,6 +18,7 @@ main = do
       if takeExtension filePath /= ".rs"
         then error "[Main] must be .rs file"
         else do
+          -- !st <- execute (
           compilerInput <- readFile filePath
           !st <- execute (run $ preProcess compilerInput ++ "\n") newSymbolTable
           -- let !(st, asmCode) = generate (run $ preProcess compilerInput ++ "\n") newSymbolTable
