@@ -13,7 +13,7 @@ import Data.List (intercalate)
 import Data.Unique (hashUnique, newUnique)
 import GHC.IO (unsafePerformIO)
 import SymbolTable (SymbolTable, Variable (..), createVariable, getOffset, getSymbol, setSymbol)
-import Token (VarType (F64T, I32T))
+import Token (VarType (BooleanT, F64T, I32T, StrT))
 
 data Node
   = IntNode Int
@@ -47,9 +47,25 @@ evaluate (CastNode n F64T) st = case n' of
   where
     n' = evaluate n st
 evaluate (CastNode n I32T) st = case n' of
-  FloatContent n -> IntContent (truncate n :: Int)
+  FloatContent n -> IntContent (round n :: Int) -- Should be truncate
   IntContent n -> IntContent n
   _ -> compilerSemanticError "Invalid cast to i32"
+  where
+    n' = evaluate n st
+evaluate (CastNode n StrT) st = case n' of
+  FloatContent n -> StringContent (show n)
+  IntContent n -> StringContent (show n)
+  StringContent n -> StringContent n
+  BoolContent n -> StringContent (show n)
+  _ -> compilerSemanticError "Invalid cast to string"
+  where
+    n' = evaluate n st
+evaluate (CastNode n BooleanT) st = case n' of
+  FloatContent n -> BoolContent (n /= 0)
+  IntContent n -> BoolContent (n /= 0)
+  StringContent n -> BoolContent (n /= "")
+  BoolContent n -> BoolContent n
+  _ -> compilerSemanticError "Invalid cast to boolean"
   where
     n' = evaluate n st
 evaluate (UnOp op a) st = case (op, a') of
@@ -84,6 +100,9 @@ evaluate (BinOp op a b) st = case (op, a', b') of -- TODO add other implicit int
   ("^", BoolContent a', BoolContent b') -> BoolContent $ a' `xor` b'
   ("^", _', _) -> compilerSemanticError "Invalid operator BinOp - for non i32 | bool"
   ("*", IntContent a', IntContent b') -> IntContent $ a' * b'
+  ("*", IntContent a', FloatContent b') -> FloatContent $ fromIntegral a' * b'
+  ("*", FloatContent a', IntContent b') -> FloatContent $ a' * fromIntegral b'
+  ("*", FloatContent a', FloatContent b') -> FloatContent $ a' * b'
   ("*", _, _) -> compilerSemanticError "Invalid operator BinOp * for non i32"
   ("**", IntContent a', IntContent b')
     | b' <= 0 -> compilerSemanticError "Negative exponent not supported"
@@ -92,6 +111,15 @@ evaluate (BinOp op a b) st = case (op, a', b') of -- TODO add other implicit int
   ("/", IntContent a', IntContent b')
     | b' == 0 -> compilerSemanticError "Division by zero"
     | otherwise -> IntContent $ a' `div` b'
+  ("/", IntContent a', FloatContent b')
+    | b' == 0 -> compilerSemanticError "Division by zero"
+    | otherwise -> FloatContent $ fromIntegral a' / b'
+  ("/", FloatContent a', IntContent b')
+    | b' == 0 -> compilerSemanticError "Division by zero"
+    | otherwise -> FloatContent $ a' / fromIntegral b'
+  ("/", FloatContent a', FloatContent b')
+    | b' == 0 -> compilerSemanticError "Division by zero"
+    | otherwise -> FloatContent $ a' / b'
   ("/", _, _) -> compilerSemanticError "Invalid operator BinOp * for non i32"
   ("==", IntContent a', IntContent b') -> BoolContent $ a' == b'
   ("==", BoolContent a', BoolContent b') -> BoolContent $ a' == b'
