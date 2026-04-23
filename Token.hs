@@ -13,6 +13,7 @@ data VarType
   | F64T
   | BooleanT
   | StrT
+  | UnityT
   deriving (Show, Eq)
 
 data Token

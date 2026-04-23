@@ -2,7 +2,8 @@
 
 import Parser.Run (run)
 import PreProcess (preProcess)
-import Semantic (Node (Assignment, BinOp, BoolNode, For, Identifier, IntNode, NoOp, Print, VarDec), execute, generate)
+import Semantic (Node (Assignment, BinOp, BoolNode, For, Identifier, IntNode, NoOp, Print, VarDec), execute)
+import SemanticASM (generate)
 import SymbolTable (newSymbolTable)
 import System.Environment (getArgs)
 import System.FilePath (takeBaseName, takeDirectory, takeExtension)
@@ -15,15 +16,18 @@ main = do
     then putStrLn "[Main] no source file provided"
     else do
       let filePath = head args
+      let flag = tail args
       if takeExtension filePath /= ".rs"
         then error "[Main] must be .rs file"
         else do
-          -- !st <- execute (
           compilerInput <- readFile filePath
-          !st <- execute (run $ preProcess compilerInput ++ "\n") newSymbolTable
-          -- let !(st, asmCode) = generate (run $ preProcess compilerInput ++ "\n") newSymbolTable
-          -- writeFile (takeDirectory filePath ++ "/" ++ (takeBaseName filePath ++ ".asm")) (formatAsmCode $ unlines asmCode)
-          return ()
+          if flag == ["--compiled"]
+            then do
+              let !(st, asmCode) = generate (run $ preProcess compilerInput ++ "\n") newSymbolTable
+              writeFile (takeDirectory filePath ++ "/" ++ (takeBaseName filePath ++ ".asm")) (formatAsmCode $ unlines asmCode)
+            else do
+              !st <- execute (run $ preProcess compilerInput ++ "\n") newSymbolTable
+              return ()
 
 formatAsmCode :: String -> String
 formatAsmCode asmCode =
