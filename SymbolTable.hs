@@ -12,8 +12,7 @@ where
 import CompilerError (compilerSemanticError)
 import Data.Data (Data (toConstr))
 import Data.List (elemIndex, find, nub)
-import Data.Set qualified as Set
-import Token (VarType (BooleanT, I32T, StrT, F64T))
+import Token (VarType (BooleanT, F64T, I32T, StrT))
 
 data Variable
   = IntContent Int

@@ -18,6 +18,7 @@ data VarType
 data Token
   = INT Int
   | FLOAT Float
+  | COMMA
   | PERIOD
   | PLUS
   | MINUS
@@ -43,6 +44,9 @@ data Token
   | ASSIGN
   | END
   | PRINT
+  | FN
+  | ARROW
+  | RETURN
   | LET
   | MUT
   | TYPE VarType

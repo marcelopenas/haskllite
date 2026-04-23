@@ -38,6 +38,8 @@ getNext currentLex@(Lexer source position)
   | isSpace nextChar = getNext nextLex -- If space or \n continue
   | isAlpha nextChar = case identifierLexState of
       (newLex, IDENTIFIER "println!") -> (newLex, PRINT)
+      (newLex, IDENTIFIER "fn") -> (newLex, FN)
+      (newLex, IDENTIFIER "return") -> (newLex, RETURN)
       (newLex, IDENTIFIER "let") -> (newLex, LET)
       (newLex, IDENTIFIER "mut") -> (newLex, MUT)
       (newLex, IDENTIFIER "if") -> (newLex, IF)
@@ -58,7 +60,9 @@ getNext currentLex@(Lexer source position)
   | isDigit nextChar = getNextParse nextLex (INT 0) insInt emptyBuilder
   | otherwise = case nextChar of
       '+' -> (nextLex, PLUS)
-      '-' -> (nextLex, MINUS)
+      '-' -> case nextNextChar of
+        '>' -> (nextNextLex, ARROW)
+        _ -> (nextLex, MINUS)
       '^' -> (nextLex, XOR)
       '!' -> (nextLex, NOT)
       '/' -> (nextLex, DIV)
@@ -71,6 +75,7 @@ getNext currentLex@(Lexer source position)
       ';' -> (nextLex, END)
       ':' -> (nextLex, TYPE_ASSIGN)
       '.' -> (nextLex, PERIOD)
+      ',' -> (nextLex, COMMA)
       '*' -> case nextNextChar of
         '*' -> (nextNextLex, POWER)
         _ -> (nextLex, MULT)
