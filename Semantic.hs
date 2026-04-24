@@ -7,7 +7,7 @@ import Control.Monad (foldM)
 import Data.Bits (Bits (xor, (.&.), (.|.)))
 import Data.Char (intToDigit)
 import GHC.IO (unsafePerformIO)
-import SymbolTable (SymbolTable, Variable (..), createVariable, getSymbol, setSymbol)
+import SymbolTable (SymbolTable, Variable (..), createVariable, getSymbol, popScope, pushScope, setSymbol)
 import Token (VarType (BooleanT, F64T, I32T, StrT))
 
 data Node
@@ -77,7 +77,7 @@ evaluate (UnOp op a) st = case (op, a') of
   ("!", _) -> compilerSemanticError "Invalid operator UnOp ! for non i32 | bool"
   where
     a' = evaluate a st
-evaluate (BinOp op a b) st = case (op, a', b') of -- TODO add other implicit int to float conversions
+evaluate (BinOp op a b) st = case (op, a', b') of
   ("+", IntContent a', IntContent b') -> IntContent $ a' + b'
   ("+", IntContent a', FloatContent b') -> FloatContent $ fromIntegral a' + b'
   ("+", FloatContent a', IntContent b') -> FloatContent $ a' + fromIntegral b'
@@ -168,8 +168,10 @@ execute (Assignment name expr) st = do
   let !st' = setSymbol (name, value) st
   return st'
 execute (Block nodes) st = do
-  !st' <- foldM (flip execute) st (reverse nodes) -- Nodes will be right to left, thus reverse nodes
-  return st'
+  let sst = pushScope st
+  !st' <- foldM (flip execute) sst (reverse nodes) -- Nodes will be right to left, thus reverse nodes
+  let ust = popScope st'
+  return ust
 execute (If evalNode ifNode elseNode) st = do
   let !value = evaluate evalNode st
   if isTrue value
