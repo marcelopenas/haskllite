@@ -25,7 +25,7 @@ evaluate (CastNode n F64T) (st, ft) = case n' of
   where
     n' = evaluate n (st, ft)
 evaluate (CastNode n I32T) (st, ft) = case n' of
-  FloatContent n -> IntContent (round n :: Int) -- Should be truncate
+  FloatContent n -> IntContent (round n :: Int) -- TODO Should be truncate
   IntContent n -> IntContent n
   _ -> compilerSemanticError "Invalid cast to i32"
   where
