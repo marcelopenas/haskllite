@@ -10,7 +10,7 @@ import Control.Monad (foldM)
 import Data.List (intercalate)
 import Data.Unique (hashUnique, newUnique)
 import GHC.IO (unsafePerformIO)
-import Semantic (Node (..))
+import Node (Node (..))
 import SymbolTable (SymbolTable, Variable (..), createVariable, getOffset, getSymbol, setSymbol)
 import Token (VarType (BooleanT, F64T, I32T, StrT))
 

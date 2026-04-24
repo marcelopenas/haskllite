@@ -1,8 +1,9 @@
 {-# LANGUAGE BangPatterns #-}
 
+import FunctionTable (newFunctionTable)
 import Parser.Run (run)
 import PreProcess (preProcess)
-import Semantic (Node (Assignment, BinOp, BoolNode, For, Identifier, IntNode, NoOp, Print, VarDec), execute)
+import Semantic (execute)
 import SemanticASM (generate)
 import SymbolTable (newSymbolTable)
 import System.Environment (getArgs)
@@ -26,7 +27,7 @@ main = do
               let !(st, asmCode) = generate (run $ preProcess compilerInput ++ "\n") newSymbolTable
               writeFile (takeDirectory filePath ++ "/" ++ (takeBaseName filePath ++ ".asm")) (formatAsmCode $ unlines asmCode)
             else do
-              !st <- execute (run $ preProcess compilerInput ++ "\n") newSymbolTable
+              !st <- execute (run $ preProcess compilerInput ++ "\n") (newSymbolTable, newFunctionTable)
               return ()
 
 formatAsmCode :: String -> String

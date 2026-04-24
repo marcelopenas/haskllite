@@ -3,7 +3,7 @@ module Parser.Term (parseTerm) where
 import Lexer (Lexer (..), LexerState, getNext)
 import {-# SOURCE #-} Parser.Factor (parseFactor)
 import Parser.Parser (Parser)
-import Semantic (Node (BinOp))
+import Node (Node (BinOp))
 import Token (Token (DIV, MULT))
 
 parseTerm :: Parser Node

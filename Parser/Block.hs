@@ -2,9 +2,9 @@ module Parser.Block (parseBlock) where
 
 import CompilerError (compilerParserError)
 import Lexer (Lexer (..), LexerState, getNext)
+import Node (Node (Block))
 import Parser.Parser (Parser)
 import Parser.Statement (parseStatement)
-import Semantic (Node (Block))
 import Token (Token (CLOSE_BRA, EOF, OPEN_BRA))
 
 parseBlock :: Parser Node

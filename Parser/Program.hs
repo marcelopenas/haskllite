@@ -1,8 +1,8 @@
 module Parser.Program (parseProgram) where
 
+import Node (Node (Block))
 import Parser.Parser (Parser)
 import Parser.Statement (parseStatement)
-import Semantic (Node (Block))
 import Token (Token (EOF))
 
 parseProgram :: Parser Node

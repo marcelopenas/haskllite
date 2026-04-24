@@ -2,6 +2,6 @@ module Parser.Expression (parseExpression) where
 
 import Lexer (LexerState)
 import Parser.Parser (Parser)
-import Semantic (Node)
+import Node (Node)
 
 parseExpression :: Parser Node

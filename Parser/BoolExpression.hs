@@ -2,9 +2,9 @@ module Parser.BoolExpression (parseBoolExpression) where
 
 import CompilerError (compilerParserError)
 import Lexer (Lexer (..), getNext)
+import Node (Node (BinOp))
 import Parser.BoolTerm (parseBoolTerm)
 import Parser.Parser (Parser)
-import Semantic (Node (BinOp))
 import Token (Token (OR))
 
 parseBoolExpression :: Parser Node

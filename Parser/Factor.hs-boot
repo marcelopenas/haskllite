@@ -1,7 +1,7 @@
 module Parser.Factor (parseFactor) where
 
 import Parser.Parser (Parser)
-import Semantic (Node)
+import Node (Node)
 import GHC.Stack (HasCallStack)
 
 parseFactor :: Parser Node

@@ -1,6 +1,6 @@
 module Parser.BoolExpression (parseBoolExpression) where
 
 import Parser.Parser (Parser)
-import Semantic (Node)
+import Node (Node)
 
 parseBoolExpression :: Parser Node

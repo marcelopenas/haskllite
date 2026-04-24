@@ -1,6 +1,6 @@
 module Parser.Block where
 
 import Parser.Parser (Parser)
-import Semantic (Node)
+import Node (Node)
 
 parseBlock :: Parser Node

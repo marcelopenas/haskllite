@@ -3,6 +3,7 @@ module Parser.Factor (parseFactor) where
 import CompilerError (compilerParserError)
 import Distribution.Fields.LexerMonad (LexState)
 import Lexer (Lexer (..), LexerState, getNext)
+import Node (Node (..))
 import {-# SOURCE #-} Parser.BoolExpression (parseBoolExpression)
 import Parser.Parser (Parser)
 import Semantic

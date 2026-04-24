@@ -4,7 +4,11 @@ let mut x:i32 = 5;
 
 println!(x); // Prints 5
 
-{
+let mut test: bool = true;
+
+if (test) {
+  test = false;
+
   x = 42; // changes outer x to 42
   println!(5); // Prints 5
   let mut x: i32 = 3;
@@ -16,3 +20,11 @@ println!(x); // Prints 5
 }
 
 println!(x); // Prints 42
+
+// All prints should be
+// 5
+// 5
+// 3
+// 2
+// 1
+// 42

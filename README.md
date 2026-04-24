@@ -90,7 +90,7 @@ The formal grammar for Haskllite is defined as:
 (* High-Level Structure *)
 PROGRAM     = { FUNC | STMT } ;
 
-FUNC        = "fn", IDENTIFIER, "(", [ ARGS ], ")", [ "->", TYPE ], BLOCK ;
+FUNC        = "fn", IDENTIFIER, "(", [ ARGS ], ")", [ "->", ( TYPE | "()" ) ], BLOCK ;
 
 ARGS        = IDENTIFIER, ":", TYPE, { ",", IDENTIFIER, ":", TYPE } ;
 

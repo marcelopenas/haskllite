@@ -2,10 +2,10 @@ module Parser.Statement (parseStatement) where
 
 import CompilerError (compilerParserError)
 import Lexer (Lexer (..), LexerState, getNext)
+import Node (Node (Assignment, For, If, NoOp, Print, VarDec, While))
 import {-# SOURCE #-} Parser.Block (parseBlock)
 import Parser.BoolExpression (parseBoolExpression)
 import Parser.Parser (Parser)
-import Semantic (Node (Assignment, For, If, NoOp, Print, VarDec, While))
 import Token (Token (ASSIGN, CLOSE_PAR, ELSE, END, FOR, IDENTIFIER, IF, LET, MUT, OPEN_PAR, PRINT, TYPE, TYPE_ASSIGN, WHILE), VarType (I32T))
 
 parseStatement :: Parser Node

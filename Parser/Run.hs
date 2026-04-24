@@ -2,8 +2,8 @@ module Parser.Run (run) where
 
 import CompilerError (compilerParserError)
 import Lexer (Lexer (Lexer), getNext)
+import Node (Node)
 import Parser.Program (parseProgram)
-import Semantic (Node)
 import Token (Token (EOF))
 
 run :: String -> Node

@@ -2,9 +2,9 @@ module Parser.Expression (parseExpression) where
 
 import CompilerError (compilerParserError)
 import Lexer (Lexer (..), LexerState, getNext)
+import Node (Node (BinOp))
 import Parser.Parser (Parser)
 import Parser.Term (parseTerm)
-import Semantic (Node (BinOp))
 import Token (Token (MINUS, PLUS))
 
 parseExpression :: Parser Node
