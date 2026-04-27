@@ -1,9 +1,10 @@
 module Parser.Program (parseProgram) where
 
 import Node (Node (Block))
+import Parser.Function (parseFunction)
 import Parser.Parser (Parser)
 import Parser.Statement (parseStatement)
-import Token (Token (EOF))
+import Token (Token (EOF, FN))
 
 parseProgram :: Parser Node
 parseProgram lexState =
@@ -14,6 +15,9 @@ parseProgram lexState =
 parseProgramLoop :: [Node] -> Parser [Node]
 parseProgramLoop statements lexState@(lex, token) = case token of
   EOF -> (lexState, statements)
-  _ -> parseProgramLoop (node : statements) nextLexState
-  where
-    (nextLexState, node) = parseStatement lexState
+  FN ->
+    let (nextLexState, node) = parseFunction lexState
+     in parseProgramLoop (node : statements) nextLexState
+  _ ->
+    let (nextLexState, node) = parseStatement lexState
+     in parseProgramLoop (node : statements) nextLexState

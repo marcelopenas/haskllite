@@ -18,3 +18,5 @@ fn main() ->  () {
   println!(a); // Imprime 3
   println!(b); // Imprime 5
 }
+
+main();

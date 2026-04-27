@@ -6,10 +6,11 @@ import CompilerError (compilerSemanticError)
 import Control.Monad (foldM)
 import Data.Bits (Bits (xor, (.&.), (.|.)))
 import Data.Char (intToDigit)
-import FunctionTable (FunctionTable)
+import Data.Data (Data (toConstr))
+import FunctionTable (FunctionTable, createFunc, getFunc)
 import GHC.IO (unsafePerformIO)
 import Node (Node (..))
-import SymbolTable (SymbolTable, Variable (..), createVariable, getSymbol, popScope, pushScope, setSymbol)
+import SymbolTable (SymbolTable, Variable (..), createVariable, getSymbol, popScope, pushScope, setSymbol, typeMatch)
 import Token (VarType (BooleanT, F64T, I32T, StrT))
 
 evaluate :: Node -> (SymbolTable, FunctionTable) -> Variable
@@ -131,26 +132,44 @@ evaluate (If evalNode ifNode elseNode) (st, ft) =
   if isTrue (evaluate evalNode (st, ft))
     then evaluate ifNode (st, ft)
     else evaluate elseNode (st, ft)
+evaluate (FuncCall name args) (st, ft) =
+  unsafePerformIO $ do
+    let !(_, params, returnType, block) = getFunc name ft
+    let sst = pushScope st
+    let sst' = foldl (\acc ((paramName, paramType), expr) -> createVariable (paramName, evaluate expr (st, ft), False, paramType) acc) sst (zip params args)
+    (!st', !ft', !ret) <- execute block (sst', ft)
+    let ust = popScope st'
+    if typeMatch returnType ret
+      then return ret
+      else compilerSemanticError $ "Runtime error: Return type mismatch in function call to " ++ name ++ ", expected " ++ show returnType ++ " but got " ++ show (toConstr ret)
 evaluate NoOp (st, ft) = NullContent -- FIXME this should not be here, it is to fix a empty statement calling eval on noOp
 
-execute :: Node -> (SymbolTable, FunctionTable) -> IO (SymbolTable, FunctionTable)
+execute :: Node -> (SymbolTable, FunctionTable) -> IO (SymbolTable, FunctionTable, Variable)
 execute (Print node) (st, ft) = do
-  let node' = evaluate node (st, ft)
+  let !node' = evaluate node (st, ft)
   print node'
-  return (st, ft)
+  return (st, ft, NullContent)
 execute (VarDec name expr immutable varType) (st, ft) = do
   let !value = evaluate expr (st, ft)
   let !st' = createVariable (name, value, immutable, varType) st
-  return (st', ft)
+  return (st', ft, NullContent)
 execute (Assignment name expr) (st, ft) = do
   let !value = evaluate expr (st, ft)
   let !st' = setSymbol (name, value) st
-  return (st', ft)
+  return (st', ft, NullContent)
 execute (Block nodes) (st, ft) = do
-  let sst = pushScope st
-  (st', ft') <- foldM (flip execute) (sst, ft) (reverse nodes) -- Nodes will be right to left, thus reverse nodes
-  let ust = popScope st'
-  return (ust, ft')
+  let !sst = pushScope st
+  let executeUntilReturn (stAcc, ftAcc, retAcc) node =
+        case retAcc of
+          NullContent -> execute node (stAcc, ftAcc)
+          _ -> return (stAcc, ftAcc, retAcc)
+  (!st', !ft', !ret) <-
+    foldM
+      executeUntilReturn
+      (sst, ft, NullContent)
+      (reverse nodes) -- Nodes will be right to left, thus reverse nodes
+  let !ust = popScope st'
+  return (ust, ft', ret)
 execute (If evalNode ifNode elseNode) (st, ft) = do
   let !value = evaluate evalNode (st, ft)
   if isTrue value
@@ -162,23 +181,43 @@ execute (While evalNode node) (st, ft) = do
   let !value = evaluate evalNode (st, ft)
   if isTrue value
     then do
-      !nextSt <- execute node (st, ft)
-      execute (While evalNode node) nextSt
+      (!st', !ft', !ret) <- execute node (st, ft)
+      if ret /= NullContent
+        then return (st', ft', ret)
+        else
+          execute (While evalNode node) (st', ft')
     else
-      return (st, ft)
+      return (st, ft, NullContent)
 execute (For assignment condition update expression) (st, ft) = do
-  -- ?should assignment be  passed and executed multiple times, or updated directly?
-  (st', ft') <- execute assignment (st, ft)
+  (!st', !ft', _) <- execute assignment (st, ft)
   let !continue = evaluate condition (st', ft')
   if isTrue continue
     then do
-      !exprSt <- execute expression (st', ft')
-      !updateSt <- execute update exprSt
-      !nextSt <- execute (For NoOp condition update expression) updateSt -- No op so that it executes init once
-      return nextSt
+      (!exprSt, !exprFt, !ret) <- execute expression (st', ft')
+      (!updateSt, !updateFt, _) <- execute update (exprSt, exprFt)
+      if ret /= NullContent
+        then return (updateSt, updateFt, ret)
+        else do
+          !nextSt <- execute (For NoOp condition update expression) (updateSt, updateFt) -- No op so that it executes init once
+          return nextSt
     else
-      return (st', ft')
-execute NoOp (st, ft) = return (st, ft)
+      return (st', ft', NullContent)
+execute (FuncDec name returnType args block) (st, ft) = do
+  let !ft' = createFunc (name, args, returnType, block) ft
+  return (st, ft', NullContent)
+execute (FuncCall name args) (st, ft) = do
+  let !(_, params, returnType, block) = getFunc name ft
+  let sst = pushScope st
+  let sst' = foldl (\acc ((paramName, paramType), expr) -> createVariable (paramName, evaluate expr (st, ft), False, paramType) acc) sst (zip params args)
+  (!st', !ft', !ret) <- execute block (sst', ft)
+  let ust = popScope st'
+  if typeMatch returnType ret
+    then return (ust, ft', ret)
+    else compilerSemanticError $ "Runtime error: Return type mismatch in function call to " ++ name ++ ", expected " ++ show returnType ++ " but got " ++ show (toConstr ret)
+execute (Return expr) (st, ft) = do
+  let !value = evaluate expr (st, ft)
+  return (st, ft, value)
+execute NoOp (st, ft) = return (st, ft, NullContent)
 
 isTrue :: Variable -> Bool
 isTrue value = case value of

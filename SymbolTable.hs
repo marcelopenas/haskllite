@@ -7,6 +7,7 @@ module SymbolTable
     getOffset,
     pushScope,
     popScope,
+    typeMatch,
     Variable (..),
   )
 where

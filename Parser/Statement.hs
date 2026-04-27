@@ -2,17 +2,17 @@ module Parser.Statement (parseStatement) where
 
 import CompilerError (compilerParserError)
 import Lexer (Lexer (..), LexerState, getNext)
-import Node (Node (Assignment, For, If, NoOp, Print, VarDec, While))
+import Node (Node (Assignment, For, FuncCall, If, NoOp, Print, Return, VarDec, While))
 import {-# SOURCE #-} Parser.Block (parseBlock)
 import Parser.BoolExpression (parseBoolExpression)
 import Parser.Parser (Parser)
-import Token (Token (ASSIGN, CLOSE_PAR, ELSE, END, FOR, IDENTIFIER, IF, LET, MUT, OPEN_PAR, PRINT, TYPE, TYPE_ASSIGN, WHILE), VarType (I32T))
+import Token (Token (ASSIGN, CLOSE_PAR, COMMA, ELSE, END, FOR, IDENTIFIER, IF, LET, MUT, OPEN_PAR, PRINT, RETURN, TYPE, TYPE_ASSIGN, WHILE), VarType (I32T))
 
 parseStatement :: Parser Node
 parseStatement lexState@(lex, token) = case token of
   END -> (nextLexState, NoOp)
   LET -> parseStatementLet nextLexState
-  IDENTIFIER name -> parseStatementAssign name nextLexState
+  IDENTIFIER name -> parseIdentifier name nextLexState
   PRINT -> (parseStatementEnd openParLexerState, Print openParNode)
   WHILE -> (statementLexState, While openParNode statementNode)
   FOR ->
@@ -24,6 +24,9 @@ parseStatement lexState@(lex, token) = case token of
   IF ->
     let (afterStatementLexState, afterAfterNode) = parseStatementElse statementLexState
      in (afterStatementLexState, If openParNode statementNode afterAfterNode)
+  RETURN ->
+    let (returnLexerState, returnNode) = parseBoolExpression nextLexState
+     in (returnLexerState, Return returnNode)
   _ -> parseBlock lexState
   where
     nextLexState = getNext lex
@@ -44,6 +47,11 @@ parseStatementCloseParP :: (LexerState, Node) -> (LexerState, Node)
 parseStatementCloseParP (lexState@(lex, token), node) = case token of
   CLOSE_PAR -> (getNext lex, node)
   _ -> compilerParserError lexState "Expected close parenthesis"
+
+expectClosePar :: Parser ()
+expectClosePar lexState@(lex, token) = case token of
+  CLOSE_PAR -> (getNext lex, ())
+  _ -> compilerParserError lexState "Expected close paren"
 
 parseStatementElse :: Parser Node
 parseStatementElse lexState@(lex, token) = case token of
@@ -121,3 +129,34 @@ parseStatementAssignFor name lexState@(lex, token) = case token of
   _ -> compilerParserError lexState "Expected assignment"
   where
     (expressionLexState, newNode) = parseBoolExpression $ getNext lex
+
+parseIdentifier :: String -> Parser Node
+parseIdentifier name lexState@(lex, token) = case token of
+  OPEN_PAR -> parseCall name lexState
+  _ -> parseStatementAssign name lexState
+
+parseCall :: String -> Parser Node
+parseCall name lexState@(lex, token) = case token of
+  OPEN_PAR ->
+    let afterOpen = getNext lex
+        (afterArgs, args) = parseCallArgs afterOpen
+        (afterClose, _) = expectClosePar afterArgs
+     in (afterClose, FuncCall name args)
+  _ -> compilerParserError lexState "Expected open paren for function call"
+
+parseCallArgs :: Parser [Node]
+parseCallArgs lexState@(lex, token) = case token of
+  CLOSE_PAR -> (lexState, [])
+  _ ->
+    let (afterFirst, first) = parseBoolExpression lexState
+        (afterRest, rest) = parseCallArgsRest afterFirst
+     in (afterRest, first : rest)
+
+parseCallArgsRest :: Parser [Node]
+parseCallArgsRest lexState@(lex, token) = case token of
+  COMMA ->
+    let afterComma = getNext lex
+        (afterExpr, expr) = parseBoolExpression afterComma
+        (afterRest, rest) = parseCallArgsRest afterExpr
+     in (afterRest, expr : rest)
+  _ -> (lexState, [])

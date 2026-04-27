@@ -126,6 +126,8 @@ FACTOR      = INTEGER
             | "(", BEXPR, ")" 
             | "scanln!", "(", ")" ;
 
+CALL        = IDENTIFIER, "(", [ BEXPR, { ",", BEXPR } ], ")" ;
+
 (* Lexical Tokens *)
 TYPE        = "str" | "i32" | "f64" | "bool" ;
 BOOL        = "true" | "false" ;
