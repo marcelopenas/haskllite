@@ -15,7 +15,7 @@ where
 import CompilerError (compilerSemanticError)
 import Data.Data (Data (toConstr))
 import Data.List (any, elemIndex, find, nub)
-import Token (VarType (BooleanT, F64T, I32T, StrT))
+import Token (VarType (BooleanT, F64T, I32T, StrT, UnityT))
 
 data Variable
   = IntContent Int
@@ -60,14 +60,17 @@ existsInCurrentFrame name = any (\(n, _, _, _) -> n == name)
 
 createVariable :: Symbol -> SymbolTable -> SymbolTable
 createVariable _ EmptyST = error "Scope [symbol] EmptyST"
-createVariable symbol (Scope frame parent) = Scope (symbol : frame) parent -- ?should create error when a var is declared with same name on prev scopes?
+createVariable symbol@(name, content, _, varType) (Scope frame parent)
+  | typeMatch varType content = Scope (symbol : frame) parent -- ?should create error when a var is declared with same name on prev scopes?
+  | otherwise = compilerSemanticError $ "Invalid type on variable declaration" ++ " Expected " ++ show varType ++ " but got " ++ show (toConstr content) ++ " on variable: " ++ name
 
 typeMatch :: VarType -> Variable -> Bool
 typeMatch I32T (IntContent _) = True
 typeMatch F64T (FloatContent _) = True
 typeMatch StrT (StringContent _) = True
 typeMatch BooleanT (BoolContent _) = True
-typeMatch _ NullContent = True
+typeMatch _ NullContent = True -- to support var declaration without assignment, and to support returning null on void functions
+-- typeMatch UnityT NullContent = True
 typeMatch _ _ = False
 
 setSymbol :: (String, Variable) -> SymbolTable -> SymbolTable

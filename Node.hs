@@ -7,6 +7,7 @@ data Node
   | FloatNode Float
   | BoolNode Bool
   | StringNode String
+  | UnityNode
   | CastNode Node VarType
   | UnOp String Node
   | BinOp String Node Node

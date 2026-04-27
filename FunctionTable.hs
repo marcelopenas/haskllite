@@ -24,7 +24,7 @@ lookup4 key = find (\(k, _, _, _) -> k == key)
 getFunc :: String -> FunctionTable -> Func
 getFunc name table = case lookup4 name table of
   Just func -> func
-  Nothing -> compilerSemanticError $ "Undefined func: " ++ "name" -- FIXME if str name will not stop
+  Nothing -> compilerSemanticError $ "Undefined func: " ++ name
 
 createFunc :: Func -> FunctionTable -> FunctionTable
 createFunc func@(name, _, _, _) table = case lookup4 name table of

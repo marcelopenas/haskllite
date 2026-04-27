@@ -19,6 +19,7 @@ evaluate (IntNode n) (st, ft) = IntContent n
 evaluate (FloatNode n) (st, ft) = FloatContent n
 evaluate (BoolNode n) (st, ft) = BoolContent n
 evaluate (StringNode n) (st, ft) = StringContent n
+evaluate UnityNode (st, ft) = NullContent
 evaluate (CastNode n F64T) (st, ft) = case n' of
   IntContent n -> FloatContent (fromIntegral n :: Float)
   FloatContent n -> FloatContent n
