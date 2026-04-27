@@ -54,8 +54,8 @@ getNext currentLex@(Lexer source position)
       (newLex, IDENTIFIER "f64") -> (newLex, TYPE F64T)
       (newLex, IDENTIFIER "bool") -> (newLex, TYPE BooleanT)
       --  Mathematical constants
-      (newLex, IDENTIFIER "e") -> (newLex, FLOAT (exp 1))
-      (newLex, IDENTIFIER "pi") -> (newLex, FLOAT pi)
+      -- (newLex, IDENTIFIER "e") -> (newLex, FLOAT (exp 1))
+      -- (newLex, IDENTIFIER "pi") -> (newLex, FLOAT pi)
       _ -> identifierLexState
   | isDigit nextChar = getNextParse nextLex (INT 0) insInt emptyBuilder
   | otherwise = case nextChar of

@@ -61,6 +61,7 @@ existsInCurrentFrame name = any (\(n, _, _, _) -> n == name)
 createVariable :: Symbol -> SymbolTable -> SymbolTable
 createVariable _ EmptyST = error "Scope [symbol] EmptyST"
 createVariable symbol@(name, content, _, varType) (Scope frame parent)
+  | existsInCurrentFrame name frame = compilerSemanticError $ "Variable already declared in current scope: " ++ name
   | typeMatch varType content = Scope (symbol : frame) parent -- ?should create error when a var is declared with same name on prev scopes?
   | otherwise = compilerSemanticError $ "Invalid type on variable declaration" ++ " Expected " ++ show varType ++ " but got " ++ show (toConstr content) ++ " on variable: " ++ name
 
