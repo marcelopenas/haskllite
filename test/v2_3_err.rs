@@ -1,6 +1,7 @@
+fn test(x:i32) ->  i32 {
+  return x;
+}
 fn main() ->  (){
-  // Variable Already Declared
-  let mut e:i32;
-  let mut e:str;
-  println!(e);
+  // Number of args wrong
+  println!(test(9, 1));
 }

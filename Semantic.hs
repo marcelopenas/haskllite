@@ -136,13 +136,16 @@ evaluate (If evalNode ifNode elseNode) (st, ft) =
 evaluate (FuncCall name args) (st, ft) =
   unsafePerformIO $ do
     let !(_, params, returnType, block) = getFunc name ft
-    let sst = pushScope st
-    let sst' = foldl (\acc ((paramName, paramType), expr) -> createVariable (paramName, evaluate expr (st, ft), False, paramType) acc) sst (zip params args)
-    (!st', !ft', !ret) <- execute block (sst', ft)
-    let ust = popScope st'
-    if typeMatch returnType ret
-      then return ret
-      else compilerSemanticError $ "Runtime error: Return type mismatch in function call to " ++ name ++ ", expected " ++ show returnType ++ " but got " ++ show (toConstr ret)
+    if length params /= length args
+      then compilerSemanticError $ "Runtime error: Argument count mismatch in function call to " ++ name ++ ", expected " ++ show (length params) ++ " but got " ++ show (length args)
+      else do
+        let sst = pushScope st
+        let sst' = foldl (\acc ((paramName, paramType), expr) -> createVariable (paramName, evaluate expr (st, ft), False, paramType) acc) sst (zip params args)
+        (!st', !ft', !ret) <- execute block (sst', ft)
+        let ust = popScope st'
+        if typeMatch returnType ret
+          then return ret
+          else compilerSemanticError $ "Runtime error: Return type mismatch in function call to " ++ name ++ ", expected " ++ show returnType ++ " but got " ++ show (toConstr ret)
 evaluate NoOp (st, ft) = NullContent -- FIXME this should not be here, it is to fix a empty statement calling eval on noOp
 
 execute :: Node -> (SymbolTable, FunctionTable) -> IO (SymbolTable, FunctionTable, Variable)
@@ -208,13 +211,16 @@ execute (FuncDec name returnType args block) (st, ft) = do
   return (st, ft', NullContent)
 execute (FuncCall name args) (st, ft) = do
   let !(_, params, returnType, block) = getFunc name ft
-  let sst = pushScope st
-  let sst' = foldl (\acc ((paramName, paramType), expr) -> createVariable (paramName, evaluate expr (st, ft), False, paramType) acc) sst (zip params args)
-  (!st', !ft', !ret) <- execute block (sst', ft)
-  let ust = popScope st'
-  if typeMatch returnType ret
-    then return (ust, ft', ret)
-    else compilerSemanticError $ "Runtime error: Return type mismatch in function call to " ++ name ++ ", expected " ++ show returnType ++ " but got " ++ show (toConstr ret)
+  if length params /= length args
+    then compilerSemanticError $ "Runtime error: Argument count mismatch in function call to " ++ name ++ ", expected " ++ show (length params) ++ " but got " ++ show (length args)
+    else do
+      let sst = pushScope st
+      let sst' = foldl (\acc ((paramName, paramType), expr) -> createVariable (paramName, evaluate expr (st, ft), False, paramType) acc) sst (zip params args)
+      (!st', !ft', !ret) <- execute block (sst', ft)
+      let ust = popScope st'
+      if typeMatch returnType ret
+        then return (ust, ft', ret)
+        else compilerSemanticError $ "Runtime error: Return type mismatch in function call to " ++ name ++ ", expected " ++ show returnType ++ " but got " ++ show (toConstr ret)
 execute (Return expr) (st, ft) = do
   let !value = evaluate expr (st, ft)
   return (st, ft, value)
