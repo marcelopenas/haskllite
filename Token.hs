@@ -1,8 +1,14 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+
 module Token
   ( Token (..),
     VarType (..),
   )
 where
+
+import Control.DeepSeq (NFData)
+import GHC.Generics (Generic)
 
 type Name = String
 
@@ -14,7 +20,7 @@ data VarType
   | BooleanT
   | StrT
   | UnityT
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic, NFData)
 
 data Token
   = INT Int

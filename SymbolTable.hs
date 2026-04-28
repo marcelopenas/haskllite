@@ -1,3 +1,6 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+
 module SymbolTable
   ( SymbolTable (..),
     getSymbol,
@@ -13,8 +16,10 @@ module SymbolTable
 where
 
 import CompilerError (compilerSemanticError)
+import Control.DeepSeq (NFData)
 import Data.Data (Data (toConstr))
 import Data.List (any, elemIndex, find, nub)
+import GHC.Generics (Generic)
 import Token (VarType (BooleanT, F64T, I32T, StrT, UnityT))
 
 data Variable
@@ -23,7 +28,7 @@ data Variable
   | StringContent String
   | BoolContent Bool
   | NullContent
-  deriving (Data, Eq)
+  deriving (Data, Eq, Generic, NFData)
 
 instance Show Variable where
   show :: Variable -> String
@@ -43,7 +48,7 @@ type Frame = [Symbol]
 data SymbolTable
   = EmptyST
   | Scope Frame SymbolTable
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic, NFData)
 
 lookup4 :: (Eq a) => a -> [(a, b, c, d)] -> Maybe (a, b, c, d)
 lookup4 key = find (\(k, _, _, _) -> k == key)

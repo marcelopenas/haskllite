@@ -1,5 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 
+import Control.DeepSeq (deepseq)
 import FunctionTable (newFunctionTable)
 import Parser.Run (run)
 import PreProcess (preProcess)
@@ -27,8 +28,8 @@ main = do
               let !(st, asmCode) = generate (run $ preProcess compilerInput ++ "\n") newSymbolTable
               writeFile (takeDirectory filePath ++ "/" ++ (takeBaseName filePath ++ ".asm")) (formatAsmCode $ unlines asmCode)
             else do
-              !st <- execute (run $ preProcess compilerInput ++ "\n") (newSymbolTable, newFunctionTable)
-              return ()
+              !sourceScope <- execute (run $ preProcess compilerInput ++ "\n") (newSymbolTable, newFunctionTable)
+              sourceScope `deepseq` return ()
 
 formatAsmCode :: String -> String
 formatAsmCode asmCode =

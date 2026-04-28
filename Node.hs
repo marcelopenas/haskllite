@@ -1,12 +1,17 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+
 module Node (Node (..)) where
 
+import Control.DeepSeq (NFData)
+import GHC.Generics (Generic)
 import Token (VarType)
 
 data Node
   = IntNode Int
   | FloatNode Float
   | BoolNode Bool
-  | StringNode String
+  | StringNode !String
   | UnityNode
   | CastNode Node VarType
   | UnOp String Node
@@ -24,4 +29,4 @@ data Node
   | FuncCall String [Node] -- name [Expression]
   | Return Node -- Expression
   | NoOp
-  deriving (Show)
+  deriving (Show, Generic, NFData)
