@@ -28,5 +28,8 @@ data Node
   | FuncDec String VarType [(String, VarType)] Node -- name returnType [(arg, argType)] Block
   | FuncCall String [Node] -- name [Expression]
   | Return Node -- Expression
+  | Struct String [Node] -- name [varDec]
+  | StructAccess Node String -- Node:should_be_Identifier fieldName
+  | StructAssign Node String Node -- Node:should_be_Identifier fieldName valueExpr
   | NoOp
   deriving (Show, Generic, NFData)

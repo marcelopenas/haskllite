@@ -20,13 +20,14 @@ import Control.DeepSeq (NFData)
 import Data.Data (Data (toConstr))
 import Data.List (any, elemIndex, find, nub)
 import GHC.Generics (Generic)
-import Token (VarType (BooleanT, F64T, I32T, StrT, UnityT))
+import Token (VarType (BooleanT, F64T, I32T, StrT, UnityT, StructT))
 
 data Variable
   = IntContent Int
   | FloatContent Float
   | StringContent String
   | BoolContent Bool
+  | StructContent Frame
   | NullContent
   deriving (Data, Eq, Generic, NFData)
 
@@ -37,6 +38,7 @@ instance Show Variable where
   show (StringContent s) = s
   show (BoolContent True) = "true"
   show (BoolContent False) = "false"
+  show (StructContent s) = show s
   show NullContent = ""
 
 type Immutable = Bool
@@ -75,6 +77,7 @@ typeMatch I32T (IntContent _) = True
 typeMatch F64T (FloatContent _) = True
 typeMatch StrT (StringContent _) = True
 typeMatch BooleanT (BoolContent _) = True
+typeMatch (StructT _) (StructContent _) = True
 typeMatch _ NullContent = True -- to support var declaration without assignment, and to support returning null on void functions
 -- typeMatch UnityT NullContent = True
 typeMatch _ _ = False

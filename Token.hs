@@ -9,6 +9,7 @@ where
 
 import Control.DeepSeq (NFData)
 import GHC.Generics (Generic)
+import Data.Data (Data)
 
 type Name = String
 
@@ -20,7 +21,8 @@ data VarType
   | BooleanT
   | StrT
   | UnityT
-  deriving (Show, Eq, Generic, NFData)
+  | StructT Name
+  deriving (Data, Show, Eq, Generic, NFData)
 
 data Token
   = INT Int
@@ -56,6 +58,7 @@ data Token
   | RETURN
   | LET
   | MUT
+  | STRUCT
   | TYPE VarType
   | TYPE_ASSIGN
   | BOOLEAN Bool

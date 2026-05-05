@@ -53,6 +53,7 @@ getNext currentLex@(Lexer source position)
       (newLex, IDENTIFIER "i32") -> (newLex, TYPE I32T)
       (newLex, IDENTIFIER "f64") -> (newLex, TYPE F64T)
       (newLex, IDENTIFIER "bool") -> (newLex, TYPE BooleanT)
+      (newLex, IDENTIFIER "struct") -> (newLex, STRUCT)
       --  Mathematical constants
       -- (newLex, IDENTIFIER "e") -> (newLex, FLOAT (exp 1))
       -- (newLex, IDENTIFIER "pi") -> (newLex, FLOAT pi)
