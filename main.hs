@@ -11,19 +11,27 @@ import System.Environment (getArgs)
 import System.FilePath (takeBaseName, takeDirectory, takeExtension)
 import Token (VarType (I32T))
 
+getFilePath :: [string] -> string
+getFilePath [] = error "[Main] no arguments provided"
+getFilePath (arg:args) = arg
+
+getFlag :: [string] -> [string]
+getFlag [] = error "[Main] no flags provided"
+getFlag (arg:args) = args
+
 main :: IO ()
 main = do
   args <- getArgs
   if null args
-    then putStrLn "[Main] no source file provided"
+    then error "[Main] no source file provided"
     else do
-      let filePath = head args
-      let flag = tail args
+      let filePath = getFilePath args
+      let flags = getFlag args
       if takeExtension filePath /= ".rs"
         then error "[Main] must be .rs file"
         else do
           compilerInput <- readFile filePath
-          if flag == ["--compiled"]
+          if flags == ["--compiled"]
             then do
               let !(st, asmCode) = generate (run $ preProcess compilerInput ++ "\n") newSymbolTable
               writeFile (takeDirectory filePath ++ "/" ++ (takeBaseName filePath ++ ".asm")) (formatAsmCode $ unlines asmCode)
