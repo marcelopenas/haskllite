@@ -12,11 +12,7 @@ obj_file="$dir_path/$name.o"
 asm_file="$dir_path/$name.asm"
 exe_file="$dir_path/$name"
 
-runghc main.hs "$file_path" --compiled && \
+runghc Main.hs "$file_path" --compiled && \
 nasm -f elf32 -o "$obj_file" "$asm_file" && \
-gcc -m32 -no-pie -nostartfiles -o "$exe_file" "$obj_file" -e _start
-
-# Cleanup
-if [ "$2" != "-save-temps" ]; then
-    rm "$obj_file" "$asm_file"
-fi
+gcc -m32 -no-pie -nostartfiles -o "$exe_file" "$obj_file" -e _start && \
+{ [ "$2" = "-save-temps" ] || rm "$obj_file" "$asm_file"; }

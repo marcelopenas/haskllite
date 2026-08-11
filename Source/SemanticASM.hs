@@ -87,7 +87,7 @@ pattern ValidNeg <-
 joinLines :: [[Char]] -> [Char]
 joinLines = intercalate "\n"
 
-generate :: Node -> SymbolTable -> (SymbolTable, [String])
+generate :: Node -> SymbolTable -> (SymbolTable, [String]) -- TODO add funcTable
 generate (IntNode val) st =
   ( st,
     [ "; IntNode",
