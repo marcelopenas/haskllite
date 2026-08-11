@@ -19,29 +19,11 @@ Haskllite is a lightweight, educational programming language inspired by Rust's 
 
 Ensure you have [Glasgow Haskell Compiler (GHC)](https://www.haskell.org/ghc/) installed.
 
-You can run the project in two ways: Interpreted or Compiled.
+As this is a project with no dependencies its easier to run wih the haskell interpreter, version 9.14.1 is recommended.
 
-### Using the compiler
+### Interpreter
 
-You can either compile or run wih the haskell interpreter
-
-#### Compile
-
-THis will produce a `haskllite` binary file that can be used to compile `.rs` sources
-
-    ./compile.sh
-
-#### Interpret
-
-Use this instead of `haskllite` binary if you wish to use the haskell interpreter
-
-    runghc ./main.hs
-
-### Interpreted Mode
-
-For quick testing without pre-compilation
-
-    ./haskllite ./path_to_source.rs
+    runghc ./Main.hs ./path_to_source.rs
 
 ### Compiled Mode
 
