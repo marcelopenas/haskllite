@@ -1,4 +1,4 @@
-module FunctionTable
+module Source.FunctionTable
   ( FunctionTable (..),
     getFunc,
     createFunc,
@@ -7,10 +7,10 @@ module FunctionTable
   )
 where
 
-import CompilerError (compilerSemanticError)
 import Data.List (find)
-import Node (Node)
-import Token (VarType)
+import Source.CompilerError (compilerSemanticError)
+import Source.Node (Node)
+import Source.Token (VarType)
 
 type Arg = (String, VarType)
 

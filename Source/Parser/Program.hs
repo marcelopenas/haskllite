@@ -1,10 +1,10 @@
-module Parser.Program (parseProgram) where
+module Source.Parser.Program (parseProgram) where
 
-import Node (Node (Block))
-import Parser.Function (parseFunction)
-import Parser.Parser (Parser)
-import Parser.Statement (parseStatement)
-import Token (Token (EOF, FN))
+import Source.Parser.Function (parseFunction)
+import Source.Parser.Parser (Parser)
+import Source.Parser.Statement (parseStatement)
+import Source.Node (Node (Block))
+import Source.Token (Token (EOF, FN))
 
 parseProgram :: Parser Node
 parseProgram lexState =

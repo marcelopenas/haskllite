@@ -1,15 +1,15 @@
 {-# LANGUAGE BangPatterns #-}
 
 import Control.DeepSeq (deepseq)
-import FunctionTable (newFunctionTable)
-import Parser.Run (run)
-import PreProcess (preProcess)
-import Semantic (execute)
-import SemanticASM (generate)
-import SymbolTable (newSymbolTable)
 import System.Environment (getArgs)
 import System.FilePath (takeBaseName, takeDirectory, takeExtension)
-import Token (VarType (I32T))
+import Source.FunctionTable (newFunctionTable)
+import Source.Parser.Run (run)
+import Source.PreProcess (preProcess)
+import Source.Semantic (execute)
+import Source.SemanticASM (generate)
+import Source.SymbolTable (newSymbolTable)
+import Source.Token (VarType (I32T))
 
 getFilePath :: [string] -> string
 getFilePath [] = error "[Main] no arguments provided"

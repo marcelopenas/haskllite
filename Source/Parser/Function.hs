@@ -1,11 +1,11 @@
-module Parser.Function (parseFunction) where
+module Source.Parser.Function (parseFunction) where
 
-import CompilerError (compilerParserError)
-import Lexer (LexerState, getNext)
-import Node (Node (FuncDec))
-import Parser.Block (parseBlock)
-import Parser.Parser (Parser)
-import Token (Token (ARROW, CLOSE_PAR, COMMA, FN, IDENTIFIER, OPEN_PAR, TYPE, TYPE_ASSIGN), VarType (UnityT))
+import Source.Parser.Block (parseBlock)
+import Source.Parser.Parser (Parser)
+import Source.CompilerError (compilerParserError)
+import Source.Lexer (LexerState, getNext)
+import Source.Node (Node (FuncDec))
+import Source.Token (Token (ARROW, CLOSE_PAR, COMMA, FN, IDENTIFIER, OPEN_PAR, TYPE, TYPE_ASSIGN), VarType (UnityT))
 
 parseFunction :: Parser Node
 parseFunction lexState@(lex, token) = case token of

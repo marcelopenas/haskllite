@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module SymbolTable
+module Source.SymbolTable
   ( SymbolTable (..),
     getSymbol,
     setSymbol,
@@ -15,12 +15,12 @@ module SymbolTable
   )
 where
 
-import CompilerError (compilerSemanticError)
 import Control.DeepSeq (NFData)
 import Data.Data (Data (toConstr))
 import Data.List (any, elemIndex, find, nub)
 import GHC.Generics (Generic)
-import Token (VarType (BooleanT, F64T, I32T, StrT, UnityT, StructT))
+import Source.CompilerError (compilerSemanticError)
+import Source.Token (VarType (BooleanT, F64T, I32T, StrT, UnityT, StructT))
 
 data Variable
   = IntContent Int

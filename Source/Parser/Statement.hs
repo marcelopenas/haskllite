@@ -1,12 +1,12 @@
-module Parser.Statement (parseStatement) where
+module Source.Parser.Statement (parseStatement) where
 
-import CompilerError (compilerParserError)
-import Lexer (Lexer (..), LexerState, getNext)
-import Node (Node (Assignment, For, FuncCall, If, NoOp, Print, Return, UnityNode, VarDec, While))
-import {-# SOURCE #-} Parser.Block (parseBlock)
-import Parser.BoolExpression (parseBoolExpression)
-import Parser.Parser (Parser)
-import Token (Token (ASSIGN, CLOSE_PAR, COMMA, ELSE, END, EOF, FOR, IDENTIFIER, IF, LET, MUT, OPEN_PAR, PRINT, RETURN, TYPE, TYPE_ASSIGN, WHILE), VarType (I32T))
+import Source.CompilerError (compilerParserError)
+import Source.Lexer (Lexer (..), LexerState, getNext)
+import Source.Node (Node (Assignment, For, FuncCall, If, NoOp, Print, Return, UnityNode, VarDec, While))
+import {-# SOURCE #-} Source.Parser.Block (parseBlock)
+import Source.Parser.BoolExpression (parseBoolExpression)
+import Source.Parser.Parser (Parser)
+import Source.Token (Token (ASSIGN, CLOSE_PAR, COMMA, ELSE, END, EOF, FOR, IDENTIFIER, IF, LET, MUT, OPEN_PAR, PRINT, RETURN, TYPE, TYPE_ASSIGN, WHILE), VarType (I32T))
 
 parseStatement :: Parser Node
 parseStatement lexState@(lex, token) = case token of

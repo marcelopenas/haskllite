@@ -1,11 +1,11 @@
-module PreProcess
+module Source.PreProcess
   ( preProcess,
   )
 where
 
-import CompilerError (compilerLexerError)
 import Data.List (findIndex, isPrefixOf, stripPrefix, tails)
 import Data.Text (Text, pack, replace, unpack)
+import Source.CompilerError (compilerLexerError)
 
 preProcess :: String -> String
 preProcess source = substituteConstants $ removeComments source

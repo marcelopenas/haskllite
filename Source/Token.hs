@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Token
+module Source.Token
   ( Token (..),
     VarType (..),
   )

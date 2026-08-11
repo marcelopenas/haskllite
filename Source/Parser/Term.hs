@@ -1,10 +1,10 @@
-module Parser.Term (parseTerm) where
+module Source.Parser.Term (parseTerm) where
 
-import Lexer (Lexer (..), LexerState, getNext)
-import {-# SOURCE #-} Parser.Factor (parseFactor)
-import Parser.Parser (Parser)
-import Node (Node (BinOp))
-import Token (Token (DIV, MULT))
+import Source.Lexer (Lexer (..), LexerState, getNext)
+import {-# SOURCE #-} Source.Parser.Factor (parseFactor)
+import Source.Parser.Parser (Parser)
+import Source.Node (Node (BinOp))
+import Source.Token (Token (DIV, MULT))
 
 parseTerm :: Parser Node
 parseTerm scanner = parseTermLoop `uncurry` parseFactor scanner

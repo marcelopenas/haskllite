@@ -1,10 +1,10 @@
-module Parser.Run (run) where
+module Source.Parser.Run (run) where
 
-import CompilerError (compilerParserError)
-import Lexer (Lexer (Lexer), getNext)
-import Node (Node (Block, FuncCall))
-import Parser.Program (parseProgram)
-import Token (Token (EOF))
+import Source.CompilerError (compilerParserError)
+import Source.Lexer (Lexer (Lexer), getNext)
+import Source.Node (Node (Block, FuncCall))
+import Source.Parser.Program (parseProgram)
+import Source.Token (Token (EOF))
 
 run :: String -> Node
 run source

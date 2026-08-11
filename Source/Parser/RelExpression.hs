@@ -1,11 +1,11 @@
-module Parser.RelExpression (parseRelExpression) where
+module Source.Parser.RelExpression (parseRelExpression) where
 
-import CompilerError (compilerParserError)
-import Lexer (Lexer (..), LexerState, getNext)
-import Node (Node (BinOp))
-import Parser.Expression (parseExpression)
-import Parser.Parser (Parser)
-import Token (Token (EQUAL, GREATER, LESSER))
+import Source.CompilerError (compilerParserError)
+import Source.Lexer (Lexer (..), LexerState, getNext)
+import Source.Node (Node (BinOp))
+import Source.Parser.Expression (parseExpression)
+import Source.Parser.Parser (Parser)
+import Source.Token (Token (EQUAL, GREATER, LESSER))
 
 parseRelExpression :: Parser Node
 parseRelExpression lexState@(lex, token) = case token of

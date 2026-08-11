@@ -1,17 +1,17 @@
 {-# LANGUAGE BangPatterns #-}
 
-module Semantic (evaluate, execute) where
+module Source.Semantic (evaluate, execute) where
 
-import CompilerError (compilerSemanticError)
 import Control.Monad (foldM)
 import Data.Bits (Bits (xor, (.&.), (.|.)))
 import Data.Char (intToDigit)
 import Data.Data (Data (toConstr))
-import FunctionTable (FunctionTable, createFunc, getFunc)
 import GHC.IO (unsafePerformIO)
-import Node (Node (..))
-import SymbolTable (SymbolTable, Variable (..), createVariable, getSymbol, popScope, pushScope, setSymbol, typeMatch)
-import Token (VarType (BooleanT, F64T, I32T, StrT))
+import Source.CompilerError (compilerSemanticError)
+import Source.FunctionTable (FunctionTable, createFunc, getFunc)
+import Source.Node (Node (..))
+import Source.SymbolTable (SymbolTable, Variable (..), createVariable, getSymbol, popScope, pushScope, setSymbol, typeMatch)
+import Source.Token (VarType (BooleanT, F64T, I32T, StrT))
 
 evaluate :: Node -> (SymbolTable, FunctionTable) -> Variable
 evaluate Scan (st, ft) = StringContent $! unsafePerformIO (getLine :: IO String)

@@ -1,11 +1,11 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Node (Node (..)) where
+module Source.Node (Node (..)) where
 
 import Control.DeepSeq (NFData)
 import GHC.Generics (Generic)
-import Token (VarType)
+import Source.Token (VarType)
 
 data Node
   = IntNode Int

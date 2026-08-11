@@ -1,11 +1,11 @@
-module Parser.Expression (parseExpression) where
+module Source.Parser.Expression (parseExpression) where
 
-import CompilerError (compilerParserError)
-import Lexer (Lexer (..), LexerState, getNext)
-import Node (Node (BinOp))
-import Parser.Parser (Parser)
-import Parser.Term (parseTerm)
-import Token (Token (MINUS, PLUS))
+import Source.Parser.Parser (Parser)
+import Source.Parser.Term (parseTerm)
+import Source.Lexer (Lexer (..), LexerState, getNext)
+import Source.Node (Node (BinOp))
+import Source.CompilerError (compilerParserError)
+import Source.Token (Token (MINUS, PLUS))
 
 parseExpression :: Parser Node
 parseExpression lexerState@(lex, token) = case token of

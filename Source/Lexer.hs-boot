@@ -1,11 +1,11 @@
-module Lexer
+module Source.Lexer
   ( Lexer (..),
     LexerState,
     getNext,
   )
 where
 
-import Token (Token)
+import Source.Token (Token)
 
 type Source = String
 

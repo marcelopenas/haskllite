@@ -1,11 +1,11 @@
-module Parser.Block (parseBlock) where
+module Source.Parser.Block (parseBlock) where
 
-import CompilerError (compilerParserError)
-import Lexer (Lexer (..), LexerState, getNext)
-import Node (Node (Block))
-import Parser.Parser (Parser)
-import Parser.Statement (parseStatement)
-import Token (Token (CLOSE_BRA, EOF, OPEN_BRA))
+import Source.Parser.Statement (parseStatement)
+import Source.Parser.Parser (Parser)
+import Source.CompilerError (compilerParserError)
+import Source.Lexer (Lexer (..), LexerState, getNext)
+import Source.Node (Node (Block))
+import Source.Token (Token (CLOSE_BRA, EOF, OPEN_BRA))
 
 parseBlock :: Parser Node
 parseBlock lexState@(lex, token) = case token of

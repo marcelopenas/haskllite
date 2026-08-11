@@ -1,8 +1,8 @@
-module CompilerError (compilerParserError, compilerSemanticError, compilerLexerError) where
+module Source.CompilerError (compilerParserError, compilerSemanticError, compilerLexerError) where
 
 import GHC.Stack (HasCallStack)
-import {-# SOURCE #-} Lexer (Lexer (..), LexerState)
-import Token (Token)
+import {-# SOURCE #-} Source.Lexer (Lexer (..), LexerState)
+import Source.Token (Token)
 
 italic      = "\x1b[3m"
 bold      = "\x1b[1m"

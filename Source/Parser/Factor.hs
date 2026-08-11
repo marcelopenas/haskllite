@@ -1,13 +1,13 @@
-module Parser.Factor (parseFactor) where
+module Source.Parser.Factor (parseFactor) where
 
-import CompilerError (compilerParserError)
 import Distribution.Fields.LexerMonad (LexState)
-import Lexer (Lexer (..), LexerState, getNext)
-import Node (Node (..))
-import {-# SOURCE #-} Parser.BoolExpression (parseBoolExpression)
-import Parser.Parser (Parser)
-import Semantic
-import Token
+import {-# SOURCE #-} Source.Parser.BoolExpression (parseBoolExpression)
+import Source.Parser.Parser (Parser)
+import Source.CompilerError (compilerParserError)
+import Source.Lexer (Lexer (..), LexerState, getNext)
+import Source.Node (Node (..))
+import Source.Semantic
+import Source.Token
 
 parseFactor :: Parser Node
 parseFactor lexState@(lex, token) = case token of

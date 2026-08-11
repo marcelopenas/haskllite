@@ -1,8 +1,8 @@
-module Lexer (Lexer (..), LexerState, getNext) where
+module Source.Lexer (Lexer (..), LexerState, getNext) where
 
-import CompilerError (compilerLexerError)
 import Data.Char (isAlpha, isAlphaNum, isDigit, isSpace)
-import Token (Token (..), VarType (..))
+import Source.CompilerError (compilerLexerError)
+import Source.Token (Token (..), VarType (..))
 
 type Source = String
 

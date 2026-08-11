@@ -3,16 +3,16 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}
 
-module SemanticASM (generate) where
+module Source.SemanticASM (generate) where
 
-import CompilerError (compilerSemanticError)
 import Control.Monad (foldM)
 import Data.List (intercalate)
 import Data.Unique (hashUnique, newUnique)
 import GHC.IO (unsafePerformIO)
-import Node (Node (..))
-import SymbolTable (SymbolTable, Variable (..), createVariable, getOffset, getSymbol, setSymbol)
-import Token (VarType (BooleanT, F64T, I32T, StrT))
+import Source.CompilerError (compilerSemanticError)
+import Source.Node (Node (..))
+import Source.SymbolTable (SymbolTable, Variable (..), createVariable, getOffset, getSymbol, setSymbol)
+import Source.Token (VarType (BooleanT, F64T, I32T, StrT))
 
 pattern ValidSum :: (Node, Node)
 pattern ValidSum <-
