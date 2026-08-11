@@ -14,7 +14,7 @@ import SymbolTable (SymbolTable, Variable (..), createVariable, getSymbol, popSc
 import Token (VarType (BooleanT, F64T, I32T, StrT))
 
 evaluate :: Node -> (SymbolTable, FunctionTable) -> Variable
-evaluate Scan (st, ft) = IntContent $ unsafePerformIO (readLn :: IO Int) -- TODO change to StringContent
+evaluate Scan (st, ft) = IntContent $! unsafePerformIO (readLn :: IO Int) -- TODO change to StringContent
 evaluate (IntNode n) (st, ft) = IntContent n
 evaluate (FloatNode n) (st, ft) = FloatContent n
 evaluate (BoolNode n) (st, ft) = BoolContent n

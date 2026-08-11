@@ -8,7 +8,7 @@ import Token (Token (EOF))
 
 run :: String -> Node
 run source
-  | finalToken == Token.EOF = case node of
+  | finalToken == EOF = case node of
       Block statements -> Block (FuncCall "main" [] : statements)
       _ -> error "Unexpected top-level node, expected a block, this will only happen if the parser is broken"
   | otherwise = compilerParserError finalLexState "Unexpected token at end of input"

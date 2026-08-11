@@ -2,8 +2,6 @@
 
 Haskllite is a lightweight, educational programming language inspired by Rust's syntax, implemented in Haskell. It serves as a simplified subset designed to demonstrate core compiler concepts including lexical analysis, parsing, and AST interpretation.
 
-[![Compilation Status](https://compiler-tester.insper-comp.com.br/svg/marcelopenas/haskllite)](https://compiler-tester.insper-comp.com.br/svg/marcelopenas/haskllite)
-
 ## Features
 
 * **Functions:** Declaration support with parameters and explicit return types.
@@ -55,7 +53,7 @@ This will produce a binary file with the same name that can be executed
 
 ```rust
 fn main() {
-    println!("Haskllite")
+    println!("Haskllite");
     let mut x: i32 = 10;
     while (x > 0) {
         println!(x);
