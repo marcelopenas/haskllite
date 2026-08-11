@@ -14,7 +14,7 @@ import SymbolTable (SymbolTable, Variable (..), createVariable, getSymbol, popSc
 import Token (VarType (BooleanT, F64T, I32T, StrT))
 
 evaluate :: Node -> (SymbolTable, FunctionTable) -> Variable
-evaluate Scan (st, ft) = IntContent $! unsafePerformIO (readLn :: IO Int) -- TODO change to StringContent
+evaluate Scan (st, ft) = StringContent $! unsafePerformIO (getLine :: IO String)
 evaluate (IntNode n) (st, ft) = IntContent n
 evaluate (FloatNode n) (st, ft) = FloatContent n
 evaluate (BoolNode n) (st, ft) = BoolContent n
@@ -27,7 +27,7 @@ evaluate (CastNode n F64T) (st, ft) = case n' of
   where
     n' = evaluate n (st, ft)
 evaluate (CastNode n I32T) (st, ft) = case n' of
-  FloatContent n -> IntContent (round n :: Int) -- TODO Should be truncate
+  FloatContent n -> IntContent (truncate n :: Int)
   IntContent n -> IntContent n
   _ -> compilerSemanticError "Invalid cast to i32"
   where
@@ -146,7 +146,7 @@ evaluate (FuncCall name args) (st, ft) =
         if typeMatch returnType ret
           then return ret
           else compilerSemanticError $ "Runtime error: Return type mismatch in function call to " ++ name ++ ", expected " ++ show returnType ++ " but got " ++ show (toConstr ret)
-evaluate NoOp (st, ft) = NullContent -- FIXME this should not be here, it is to fix a empty statement calling eval on noOp
+evaluate NoOp (st, ft) = NullContent -- This should not be here, it is to fix a empty statement calling eval on noOp
 
 execute :: Node -> (SymbolTable, FunctionTable) -> IO (SymbolTable, FunctionTable, Variable)
 execute (Print node) (st, ft) = do

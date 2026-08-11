@@ -8,8 +8,7 @@ fn main() {
     let y: f64 = 4.2;
     let mut z: str = (str) y;
 
-    let mut text: str;
-    text = (str) scanln!();
+    let mut text: str = (str) scanln!();
 
     println!((str) z + text);
 }
