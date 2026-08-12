@@ -27,7 +27,8 @@ As this is a project with no dependencies its easier to run wih the haskell inte
 
 ### Compiled Mode
 
-This will produce a binary file with the same name that can be executed
+This will produce a binary file with the same name that can be executed.
+> Notice that some features may not work with this mode.
 
     bash compile.sh ./path_to_source.rs
 
