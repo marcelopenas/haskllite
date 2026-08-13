@@ -37,4 +37,11 @@ main.exe
 
 haskllite
 
+# Built files in examples
+
+examples/*
+!examples/*.rs
+
+# Dev
+
 .vscode
