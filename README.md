@@ -21,23 +21,34 @@ Ensure you have [Glasgow Haskell Compiler (GHC)](https://www.haskell.org/ghc/) i
 
 As this is a project with no dependencies its easier to run wih the haskell interpreter, version 9.14.1 is recommended.
 
-### Interpreter
+### Interpreter Mode
+
+Haskllite can run as an interpreter, this wont produce code and will run entirely on memory
+
+The following command runs the source as an interpreter
 
     runghc ./Main.hs ./path_to_source.rs
 
-### Compiled Mode
+### Compiler Mode
 
-This will produce a binary file with the same name that can be executed.
+Haskllite can also run as a compiler, it will generate x86 ASM that can be converted to an executable.
+
 > Notice that some features may not work with this mode.
+
+The following command produces the executable:
 
     bash compile.sh ./path_to_source.rs
 
 ### Example code
 
+This is an example of the Rust inspired language that can be executed with Haskllite. It, along with more examples are available under [examples](examples/readme_demo.rs), showcasing all the available features.
+
 ```rust
+const N = 10;
+
 fn main() { // This is the demo from the readme
     println!("Haskllite");
-    let mut x: i32 = 10;
+    let mut x: i32 = if 1 == 1 {N} else {0};
     while (x > 0) {
         println!(x);
         x = x - 1;
@@ -48,13 +59,13 @@ fn main() { // This is the demo from the readme
     let mut text: str = (str) scanln!();
 
     println!((str) z + text);
-
+    //! */ ;;; weird comment()
     let mut result: bool = 42 > 67 ;
     for (i = 0; i < 7; i = i + 1) {
         result = !result;
     }
 
-    println!((str) result + "... or False?");
+    println!(result + "... or False?"); // Implicit casting!
 } // This works!!
 ```
 
@@ -62,13 +73,15 @@ fn main() { // This is the demo from the readme
 
 The project follows a standard compiler pipeline:
 
-1. Lexer: Tokenizes the raw input string.
+1. Pre-processing: Replaces constants and removes comments.
 
-2. Parser: Recursive descent parser based on the EBNF below.
+2. Lexer: Tokenizes the raw input string.
 
-3. AST: Generates an Abstract Syntax Tree representing the program.
+3. Parser: Recursive descent parser based on the EBNF below.
 
-4. Interpreter: Traverses the AST to execute the logic in Haskell.
+4. AST: Generates an Abstract Syntax Tree representing the program.
+
+5. Interpreter: Traverses the AST executing the logic or generating the ASM.
 
 ## Grammar specifications
 
@@ -127,7 +140,3 @@ INTEGER     = DIGIT, { DIGIT } ;
 LETTER      = "a" | "b" | "..." | "z" | "A" | "B" | "..." | "Z" ;
 DIGIT       = "0" | "1" | "..." | "9" ;
 ```
-
-### Syntactic diagram
-
-![Syntactic diagram](img/diagram.png)
