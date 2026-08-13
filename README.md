@@ -1,6 +1,6 @@
 # Haskllite
 
-Haskllite is a lightweight, educational programming language inspired by Rust's syntax, implemented in Haskell. It serves as a simplified subset designed to demonstrate core compiler concepts including lexical analysis, parsing, and AST interpretation.
+Haskllite is a lightweight, educational interpreter/compiler for a programming language inspired by Rust's syntax, implemented in Haskell. It serves as a simplified subset designed to demonstrate core compiler concepts including lexical analysis, parsing, and AST interpretation.
 
 ## Features
 
@@ -35,7 +35,7 @@ This will produce a binary file with the same name that can be executed.
 ### Example code
 
 ```rust
-fn main() {
+fn main() { // This is the demo from the readme
     println!("Haskllite");
     let mut x: i32 = 10;
     while (x > 0) {
@@ -43,10 +43,19 @@ fn main() {
         x = x - 1;
     }
     let y: f64 = 4.2;
-    let mut z: str = (str) y;
+    let mut z: str = (str) y; // Casting to string
 
-    println!(z + scanln!());
-}
+    let mut text: str = (str) scanln!();
+
+    println!((str) z + text);
+
+    let mut result: bool = 42 > 67 ;
+    for (i = 0; i < 7; i = i + 1) {
+        result = !result;
+    }
+
+    println!((str) result + "... or False?");
+} // This works!!
 ```
 
 ## Architecture

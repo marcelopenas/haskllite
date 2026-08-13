@@ -11,4 +11,11 @@ fn main() { // This is the demo from the readme
     let mut text: str = (str) scanln!();
 
     println!((str) z + text);
-} // This works only on interpreted mode
+
+    let mut result: bool = 42 > 67 ;
+    for (i = 0; i < 7; i = i + 1) {
+        result = !result;
+    }
+
+    println!((str) result + "... or False?");
+} // This works!!
