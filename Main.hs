@@ -34,7 +34,7 @@ main = do
           compilerInput <- readFile filePath
           if flags == ["--compiled"]
             then do
-              let !(st, asmCode) = generate (run $ preProcess compilerInput ++ "\n") newSymbolTable
+              let !(st, _ft, asmCode) = generate (run $ preProcess compilerInput ++ "\n") (newSymbolTable, newFunctionTable)
               writeFile (takeDirectory filePath ++ "/" ++ (takeBaseName filePath ++ ".asm")) (formatAsmCode $ unlines asmCode)
             else do
               !sourceScope <- execute (run $ preProcess compilerInput ++ "\n") (newSymbolTable, newFunctionTable)
