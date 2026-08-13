@@ -105,7 +105,7 @@ getNextParseString currentLex@(Lexer source position) building = case nextChar o
   '\"' -> (nextLex, STR $ reverse building)
   _
     | (position + 1) < length source -> getNextParseString nextLex (nextChar : building)
-    | otherwise -> compilerLexerError source (position, source !! (position - 1)) "EOL on string" -- FIXME this never happens, why???
+    | otherwise -> compilerLexerError source (position, source !! (position - 1)) "EOL on string"
   where
     nextLex = getNextLex currentLex
     nextChar = getCharLex nextLex
