@@ -1,4 +1,4 @@
-# Haskllite
+# Haskllite <img src="img/haskllite.svg" align="right" width="150" alt="Haskllite logo">
 
 Haskllite is a lightweight, educational interpreter/compiler for a programming language inspired by Rust's syntax, implemented in Haskell. It serves as a simplified subset designed to demonstrate core compiler concepts including lexical analysis, parsing, and AST interpretation.
 
@@ -13,7 +13,8 @@ Haskllite is a lightweight, educational interpreter/compiler for a programming l
 * **I/O Operations:** Basic `println!()` and `scanln!()` macros.
 * **Error Reporting:** Descriptive compilation error messages featuring type info and formatted code snippets showing the error location.
 
-> **Compatibility Note:** While Haskllite mimics Rust syntax, it is a simplified subset. It does not include a borrow checker, ownership system, or complex lifetimes.
+> [!NOTE]
+> **Compatibility:** While Haskllite mimics Rust syntax, it is a simplified subset. It does not include a borrow checker, ownership system, or complex lifetimes.
 
 ## Running
 
@@ -33,6 +34,7 @@ The following command runs the source as an interpreter
 
 Haskllite can also run as a compiler, it will generate x86 ASM that can be converted to an executable.
 
+> [!IMPORTANT]
 > Notice that some features may not work with this mode.
 
 The following command produces the executable:

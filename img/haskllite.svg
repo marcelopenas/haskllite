@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%">
+  <defs>
+    <!-- Gear Split Gradients -->
+    <linearGradient id="gradOuter" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="49.9%" stop-color="#F28135" />
+      <stop offset="50%" stop-color="#C03A12" />
+    </linearGradient>
+    
+    <linearGradient id="gradMain" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="49.9%" stop-color="#D3511A" />
+      <stop offset="50%" stop-color="#801A05" />
+    </linearGradient>
+
+    <radialGradient id="gearShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="75%" stop-color="#000000" stop-opacity="0" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.6" />
+    </radialGradient>
+
+    <!-- Inner Blue Ring Gradient -->
+    <linearGradient id="gradBlueRing" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="49.9%" stop-color="#322B65" />
+      <stop offset="50%" stop-color="#18153A" />
+    </linearGradient>
+
+    <!-- Central Symbol Metallic Gradients -->
+    <!-- Lambda Main Legs -->
+    <linearGradient id="gradP1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#CDE0FF"/>
+      <stop offset="100%" stop-color="#8FB2F0"/>
+    </linearGradient>
+    <linearGradient id="gradP2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4E4A8C"/>
+      <stop offset="100%" stop-color="#231E50"/>
+    </linearGradient>
+    <linearGradient id="gradP3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8AAFF0"/>
+      <stop offset="100%" stop-color="#557ACA"/>
+    </linearGradient>
+    <linearGradient id="gradP4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#A5C7FF"/>
+      <stop offset="100%" stop-color="#6A8EDA"/>
+    </linearGradient>
+    <linearGradient id="gradP5" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3B3673"/>
+      <stop offset="100%" stop-color="#1F1B47"/>
+    </linearGradient>
+
+    <!-- Horizontal Bars (Equals) -->
+    <linearGradient id="gradTLight" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#A4CAFF"/>
+      <stop offset="100%" stop-color="#769DE4"/>
+    </linearGradient>
+    <linearGradient id="gradTDark" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4B458A"/>
+      <stop offset="100%" stop-color="#2A2463"/>
+    </linearGradient>
+    <linearGradient id="gradBLight" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#8BB4F5"/>
+      <stop offset="100%" stop-color="#5D83CC"/>
+    </linearGradient>
+    <linearGradient id="gradBDark" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3C3675"/>
+      <stop offset="100%" stop-color="#1F1A4C"/>
+    </linearGradient>
+
+    <!-- Drop Shadow for Depth -->
+    <filter id="drop-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#000000" flood-opacity="0.85"/>
+    </filter>
+
+    <filter id="ring-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+
+    <!-- Base Gear Shape (Centered at 0,0) -->
+    <g id="gearShape">
+      <circle cx="0" cy="0" r="312" />
+      <polygon id="tooth" points="-40,-370 40,-370 50,-310 -50,-310" />
+      <use href="#tooth" transform="rotate(30)" />
+      <use href="#tooth" transform="rotate(60)" />
+      <use href="#tooth" transform="rotate(90)" />
+      <use href="#tooth" transform="rotate(120)" />
+      <use href="#tooth" transform="rotate(150)" />
+      <use href="#tooth" transform="rotate(180)" />
+      <use href="#tooth" transform="rotate(210)" />
+      <use href="#tooth" transform="rotate(240)" />
+      <use href="#tooth" transform="rotate(270)" />
+      <use href="#tooth" transform="rotate(300)" />
+      <use href="#tooth" transform="rotate(330)" />
+    </g>
+
+    <!-- Layer Masks to create the uniform borders -->
+    <mask id="maskOuter" maskUnits="userSpaceOnUse">
+      <g transform="translate(400, 400)">
+        <rect x="-400" y="-400" width="800" height="800" fill="black" />
+        <use href="#gearShape" fill="white" />
+        <circle cx="0" cy="0" r="230" fill="black" />
+      </g>
+    </mask>
+
+    <mask id="maskInner" maskUnits="userSpaceOnUse">
+      <g transform="translate(400, 400)">
+        <rect x="-400" y="-400" width="800" height="800" fill="black" />
+        <use href="#gearShape" transform="scale(0.94)" fill="white" />
+        <circle cx="0" cy="0" r="242" fill="black" />
+      </g>
+    </mask>
+  </defs>
+
+  <!-- Background Layer: Outer thick border (Lighter) -->
+  <rect x="0" y="0" width="800" height="800" fill="url(#gradOuter)" mask="url(#maskOuter)" />
+  
+  <!-- Recessed Layer: Main gear body (Darker) -->
+  <rect x="0" y="0" width="800" height="800" fill="url(#gradMain)" mask="url(#maskInner)" />
+  
+  <!-- Vignette Shadow Overlay for the Gear -->
+  <rect x="0" y="0" width="800" height="800" fill="url(#gearShadow)" mask="url(#maskOuter)" />
+
+  <!-- Inner Blue Ring -->
+  <g filter="url(#ring-shadow)">
+    <!-- Path to create a thick ring using evenodd fill -->
+    <path d="M 400,185 a 215,215 0 1,1 0,430 a 215,215 0 1,1 0,-430 M 400,235 a 165,165 0 1,0 0,330 a 165,165 0 1,0 0,-330" fill-rule="evenodd" fill="url(#gradBlueRing)" />
+    
+    <!-- Bevel highlights and shadows for the ring -->
+    <circle cx="400" cy="400" r="215" stroke="#100C2B" stroke-width="6" fill="none" />
+    <circle cx="400" cy="400" r="165" stroke="#08061A" stroke-width="8" fill="none" />
+  </g>
+
+  <!-- Central Symbol (Haskell Lambda + Equals) -->
+  <g transform="translate(400, 400) translate(-15, 0) scale(1.3)" filter="url(#drop-shadow)">
+    <!-- Bottom Left Leg - Light Face -->
+    <polygon points="-20,-10 5,-10 -75,130 -100,130" 
+             fill="url(#gradP4)" stroke="url(#gradP4)" stroke-width="1" stroke-linejoin="round" />
+             
+    <!-- Bottom Left Leg - Dark Face -->
+    <polygon points="5,-10 3,36 -50,130 -75,130" 
+             fill="url(#gradP5)" stroke="url(#gradP5)" stroke-width="1" stroke-linejoin="round" />
+
+    <!-- Bottom Right Leg (Main Leg Bottom) - Light Face -->
+    <polygon points="5,-10 75,130 50,130 3,36" 
+             fill="url(#gradP3)" stroke="url(#gradP3)" stroke-width="1" stroke-linejoin="round" />
+
+    <!-- Top Left (Main Leg Top) - Light Face -->
+    <polygon points="-80,-130 -55,-130 5,-10 -20,-10" 
+             fill="url(#gradP1)" stroke="url(#gradP1)" stroke-width="1" stroke-linejoin="round" />
+
+    <!-- Main Leg - Dark Face (Full Right Edge) -->
+    <polygon points="-55,-130 -30,-130 100,130 75,130" 
+             fill="url(#gradP2)" stroke="url(#gradP2)" stroke-width="1" stroke-linejoin="round" />
+
+    <!-- Top Horizontal Bar - Light Face -->
+    <polygon points="45,20 130,20 137.5,35 52.5,35" 
+             fill="url(#gradTLight)" stroke="url(#gradTLight)" stroke-width="1" stroke-linejoin="round" />
+
+    <!-- Top Horizontal Bar - Dark Face -->
+    <polygon points="52.5,35 137.5,35 145,50 60,50" 
+             fill="url(#gradTDark)" stroke="url(#gradTDark)" stroke-width="1" stroke-linejoin="round" />
+
+    <!-- Bottom Horizontal Bar - Light Face -->
+    <polygon points="75,80 160,80 167.5,95 82.5,95" 
+             fill="url(#gradBLight)" stroke="url(#gradBLight)" stroke-width="1" stroke-linejoin="round" />
+
+    <!-- Bottom Horizontal Bar - Dark Face -->
+    <polygon points="82.5,95 167.5,95 175,110 90,110" 
+             fill="url(#gradBDark)" stroke="url(#gradBDark)" stroke-width="1" stroke-linejoin="round" />
+  </g>
+</svg>
