@@ -91,7 +91,9 @@ The project follows a standard compiler pipeline:
 
 The formal grammar for Haskllite is defined as:
 
-```ebnf
+```mermaid
+railroad-ebnf-beta
+
 (* High-Level Structure *)
 PROGRAM     = { FUNC | STMT } ;
 
